@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>계산왕 바리스타: 자연수 혼합계산 카페</title>
+    <style>
+        :root {
+            --bg-color: #f4e4bc;
+            --panel-color: #fff8e1;
+            --primary-btn: #6f4e37;
+            --primary-btn-hover: #5d4037;
+            --text-color: #3e2723;
+            --highlight: #d7ccc8;
+            --slot-bg: #efebe9;
+            --mission-bg: #ffccbc;
+            --mission-border: #d84315;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+        }
+
+        /* Header & Stats */
+        header {
+            width: 100%;
+            background-color: var(--primary-btn);
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .stat-box {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        /* Mission Bar */
+        #mission-bar {
+            width: 100%;
+            background-color: var(--mission-bg);
+            border-bottom: 2px solid var(--mission-border);
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #bf360c;
+            display: none; /* Hidden by default */
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Main Game Area */
+        #game-container {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            width: 95%;
+            max-width: 1200px;
+            height: 80vh;
+            margin-top: 15px;
+        }
+
+        .panel {
+            background-color: var(--panel-color);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            border: 2px solid var(--primary-btn);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--highlight);
+            padding-bottom: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        /* Components */
+        .btn {
+            background-color: var(--primary-btn);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-btn-hover);
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Inventory & Recipe List */
+        .item-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+        }
+
+        .item-card {
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        
+        .item-card:active {
+            transform: scale(0.95);
+        }
+        
+        .item-icon {
+            font-size: 2rem;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .item-icon img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .draggable-item {
+            cursor: grab;
+        }
+        .draggable-item:active {
+            cursor: grabbing;
+        }
+
+        /* Crafting Table */
+        #crafting-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #crafting-slots {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .slot {
+            width: 70px;
+            height: 70px;
+            background-color: var(--slot-bg);
+            border: 2px dashed #bbb;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .slot.active {
+            border-color: var(--primary-btn);
+            background-color: #fff;
+        }
+
+        .slot-label {
+            position: absolute;
+            bottom: -20px;
+            font-size: 0.8rem;
+            width: 100%;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        #serving-counter {
+            margin-top: auto;
+            width: 100%;
+            height: 100px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #999;
+        }
+
+        .drink-item {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: grab;
+            position: relative;
+        }
+        
+        .drink-quality {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            font-size: 1rem;
+            background: #fff;
+            border-radius: 50%;
+            padding: 2px;
+            border: 1px solid #ccc;
+        }
+
+        /* Customers */
+        .customer-card {
+            background: #fff;
+            border-left: 5px solid var(--primary-btn);
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .customer-card.drag-over {
+            background-color: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+
+        /* Modal (Math Problem) */
+        #math-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .math-problem {
+            font-size: 2rem;
+            margin: 20px 0;
+            font-weight: bold;
+            font-family: 'Times New Roman', serif;
+            color: #d84315;
+        }
+
+        .math-input {
+            font-size: 1.5rem;
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .guide-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .result-message {
+            margin-top: 10px;
+            font-weight: bold;
+            height: 24px;
+        }
+
+        .correct { color: green; }
+        .wrong { color: red; }
+
+        /* Game Over Modal */
+        #game-over-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: white;
+        }
+
+        .game-over-content {
+            background-color: #3e2723;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 4px solid #d84315;
+        }
+
+        /* Areas Grid Layout */
+        #inventory-area { grid-area: 1 / 1 / 3 / 2; }
+        #kitchen-area { grid-area: 1 / 2 / 3 / 3; }
+        #order-area { grid-area: 1 / 3 / 2 / 4; }
+        #recipe-area { grid-area: 2 / 3 / 3 / 4; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="stat-box">⭐ 평판: <span id="rep-display">0</span></div>
+        <div class="stat-box">💰 골드: <span id="gold-display">0</span></div>
+        <div style="font-size: 0.9rem;">( ) 괄호 먼저 ➔ ×÷ 왼쪽부터 ➔ +- 왼쪽부터</div>
+    </header>
+
+    <div id="mission-bar">
+        🔥 미션: <span id="mission-desc">손님 2명 서빙하기</span> 
+        (<span id="mission-progress">0</span>/<span id="mission-goal">2</span>) 
+        ⏳ 남은 시간: <span id="mission-timer">60</span>초
+    </div>
+
+    <div id="game-container">
+        <!-- 1. 재료 창고 (Inventory) -->
+        <div id="inventory-area" class="panel">
+            <h2>📦 재료 창고</h2>
+            <p style="font-size: 0.8rem; color: #666;">재료를 드래그해서 제조대로 옮기세요.<br>부족하면 '구하기' 버튼 클릭!</p>
+            <div class="item-list" id="inventory-list">
+                <!-- JS로 생성 -->
+            </div>
+        </div>
+
+        <!-- 2. 주방 (Crafting Table) -->
+        <div id="kitchen-area" class="panel">
+            <h2>☕ 제조대 (Crafting Table)</h2>
+            <div id="crafting-area">
+                <div id="current-recipe-info" style="margin-bottom: 10px; font-weight: bold; color: #555;">
+                    만들 메뉴를 레시피북에서 선택하세요!
+                </div>
+                
+                <!-- Drop Zones for Ingredients -->
+                <div id="crafting-slots">
+                    <!-- Slots generated by JS -->
+                </div>
+
+                <button id="craft-btn" class="btn" onclick="startCraftingMath()" disabled style="font-size: 1.2rem; padding: 10px 30px;">
+                    만들기 (문제 풀기)
+                </button>
+            </div>
+
+            <div style="margin-top: 20px; border-top: 2px dashed #ccc; width: 100%; padding-top: 10px;">
+                <h3 style="text-align: center; margin: 0 0 10px 0;">완성된 음료 (Serving Counter)</h3>
+                <div id="serving-counter">
+                    <div style="color: #999;">음료가 완성되면 여기에 나타납니다.<br>손님에게 드래그해서 서빙하세요!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 주문 대기열 (Customers) -->
+        <div id="order-area" class="panel">
+            <h2>🔔 손님 주문</h2>
+            <div id="customer-list">
+                <p>손님이 오는 중입니다...</p>
+            </div>
+        </div>
+
+        <!-- 4. 레시피 북 (Recipe Book) -->
+        <div id="recipe-area" class="panel">
+            <h2>📖 레시피 & 메뉴 선택</h2>
+            <p style="font-size: 0.8rem;">만들고 싶은 메뉴를 클릭해서 제조대에 세팅하세요.</p>
+            <div class="item-list" id="upgrade-list">
+                <!-- JS로 생성 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Math Modal -->
+    <div id="math-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">계산 문제</h2>
+            <div class="guide-text">
+                💡 <b>계산 순서 힌트:</b><br>
+                1. <b>( )</b> 괄호 안을 제일 먼저!<br>
+                2. <b>×, ÷</b> 곱셈, 나눗셈을 그 다음 (왼쪽부터)<br>
+                3. <b>+, -</b> 덧셈, 뺄셈을 마지막 (왼쪽부터)
+            </div>
+            <div id="problem-display" class="math-problem">10 + 2 * 3</div>
+            <input type="number" id="answer-input" class="math-input" placeholder="정답 입력" onkeydown="if(event.key === 'Enter') checkAnswer()">
+            <br>
+            <button class="btn" onclick="checkAnswer()">확인</button>
+            <div id="result-msg" class="result-message"></div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal">
+        <div class="game-over-content">
+            <h1 style="font-size: 3rem; margin-bottom: 20px;">GAME OVER</h1>
+            <p style="font-size: 1.5rem;">미션 실패! 카페가 파산했습니다.</p>
+            <p>최종 평판: <span id="final-rep">0</span></p>
+            <button class="btn" onclick="location.reload()" style="font-size: 1.5rem; padding: 15px 30px; margin-top: 20px;">다시 시작하기</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Data ---
+        const ingredients = [
+            { id: 'bean', name: '원두', icon: '<img src="coffeebeans.png" alt="원두">' },
+            { id: 'water', name: '물', icon: '💧' },
+            { id: 'milk', name: '우유', icon: '🥛' },
+            { id: 'sugar', name: '시럽', icon: '🍬' },
+            { id: 'ice', name: '얼음', icon: '🧊' }
+        ];
+
+        const recipes = [
+            // Unlocked Initially (3+)
+            { id: 'espresso', name: '에스프레소', icon: '🥃', req: { bean: 3 }, price: 40, difficulty: 'medium', unlocked: true, unlockCost: 0 },
+            { id: 'americano', name: '아메리카노', icon: '☕', req: { bean: 2, water: 2 }, price: 50, difficulty: 'medium', unlocked: true, unlockCost: 0 },
+            { id: 'latte', name: '카페라떼', icon: '🥛', req: { bean: 2, milk: 3 }, price: 80, difficulty: 'hard', unlocked: true, unlockCost: 0 },
+            
+            // Unlockable
+            { id: 'ice_americano', name: '아이스 아메', icon: '🧊☕', req: { bean: 2, water: 1, ice: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 100 },
+            { id: 'cappuccino', name: '카푸치노', icon: '🥯', req: { bean: 2, milk: 2 }, price: 85, difficulty: 'hard', unlocked: false, unlockCost: 150 },
+            { id: 'vanilla_latte', name: '바닐라라떼', icon: '🍦', req: { bean: 2, milk: 2, sugar: 1 }, price: 90, difficulty: 'hard', unlocked: false, unlockCost: 200 },
+            { id: 'mocha', name: '카페모카', icon: '🍫', req: { bean: 2, milk: 1, sugar: 2 }, price: 100, difficulty: 'very-hard', unlocked: false, unlockCost: 250 },
+            { id: 'macchiato', name: '마키아토', icon: '🍮', req: { bean: 2, milk: 1, sugar: 2 }, price: 110, difficulty: 'very-hard', unlocked: false, unlockCost: 300 },
+            { id: 'affogato', name: '아포가토', icon: '🍨', req: { bean: 2, ice: 1, sugar: 1 }, price: 120, difficulty: 'very-hard', unlocked: false, unlockCost: 350 },
+            { id: 'coldbrew', name: '콜드브루', icon: '🏺', req: { bean: 4, water: 2 }, price: 130, difficulty: 'hard', unlocked: false, unlockCost: 400 },
+            { id: 'frappe', name: '프라페', icon: '🥤', req: { bean: 2, milk: 1, ice: 3, sugar: 1 }, price: 150, difficulty: 'very-hard', unlocked: false, unlockCost: 500 }
+        ];
+
+        const customerNames = [
+            "민수", "지민", "서연", "준호", "영희", "철수", 
+            "John", "Jane", "Steve", "Emma", "David", "Sarah", 
+            "Michael", "Olivia", "Chris", "Jessica"
+        ];
+
+        // --- Game State ---
+        let state = {
+            gold: 0,
+            rep: 0,
+            inventory: { bean: 10, water: 10, milk: 5, sugar: 5, ice: 5 },
+            customers: []
+        };
+
+        let mission = {
+            active: false,
+            type: null, // 'serve', 'gold'
+            goal: 0,
+            current: 0,
+            timeLeft: 0,
+            timerId: null,
+            nextMissionTime: 30 // First mission after 30s
+        };
+
+        let gameTime = 0;
+        let gameLoopId = null;
+
+        let currentProblem = null;
+        let currentAction = null; 
+        let currentAttempts = 0; 
+        
+        let activeRecipeId = null;
+        let craftingSlots = {}; 
+        let finishedDrink = null;
+
+        // --- Math Engine ---
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function isCleanDivision(expr) {
+            return Number.isInteger(eval(expr));
+        }
+
+        function generateProblem(difficulty) {
+            let expression = "";
+            let answer = 0;
+            let displayExp = "";
+
+            while (true) {
+                try {
+                    const ops_pm = ['+', '-'];
+                    const ops_md = ['*', '/'];
+                    const all_ops = ['+', '-', '*', '/'];
+
+                    if (difficulty === 'easy') {
+                        const n1 = getRandomInt(2, 9);
+                        const n2 = getRandomInt(2, 9);
+                        const n3 = getRandomInt(2, 9);
+                        const type = getRandomInt(1, 2);
+                        const op_pm = ops_pm[getRandomInt(0, 1)];
+                        const op_md = ops_md[getRandomInt(0, 1)];
+
+                        if (type === 1) expression = `${n1} ${op_pm} ${n2} ${op_md} ${n3}`;
+                        else expression = `${n1} ${op_md} ${n2} ${op_pm} ${n3}`;
+                    } 
+                    else if (difficulty === 'medium') {
+                        const n1 = getRandomInt(5, 15);
+                        const n2 = getRandomInt(2, 10);
+                        const n3 = getRandomInt(2, 10);
+                        
+                        // Force Mix: Ensure at least one PM and one MD
+                        const op_pm = ops_pm[getRandomInt(0, 1)];
+                        const op_md = ops_md[getRandomInt(0, 1)];
+                        
+                        // Randomize order
+                        let op1, op2;
+                        if (Math.random() < 0.5) { op1 = op_pm; op2 = op_md; }
+                        else { op1 = op_md; op2 = op_pm; }
+
+                        const useParen = Math.random() < 0.5;
+
+                        if (useParen) {
+                            if (Math.random() < 0.5) expression = `(${n1} ${op1} ${n2}) ${op2} ${n3}`;
+                            else expression = `${n1} ${op1} (${n2} ${op2} ${n3})`;
+                        } else {
+                            expression = `${n1} ${op1} ${n2} ${op2} ${n3}`;
+                        }
+                    } 
+                    else {
+                        const n1 = getRandomInt(5, 20);
+                        const n2 = getRandomInt(2, 10);
+                        const n3 = getRandomInt(2, 10);
+                        const n4 = getRandomInt(2, 10);
+                        
+                        // Force Mix: Ensure at least one PM and one MD
+                        const op_pm = ops_pm[getRandomInt(0, 1)];
+                        const op_md = ops_md[getRandomInt(0, 1)];
+                        const op_rnd = all_ops[getRandomInt(0, 3)];
+                        
+                        const ops = [op_pm, op_md, op_rnd];
+                        // Shuffle ops
+                        for (let i = ops.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [ops[i], ops[j]] = [ops[j], ops[i]];
+                        }
+                        
+                        const op1 = ops[0];
+                        const op2 = ops[1];
+                        const op3 = ops[2];
+
+                        const type = getRandomInt(1, 3);
+                        if (type === 1) expression = `(${n1} ${op1} ${n2}) ${op2} ${n3} ${op3} ${n4}`;
+                        else if (type === 2) expression = `${n1} ${op1} (${n2} ${op2} ${n3}) ${op3} ${n4}`;
+                        else expression = `${n1} ${op1} ${n2} ${op2} (${n3} ${op3} ${n4})`;
+                    }
+
+                    let result = eval(expression);
+
+                    if (Number.isInteger(result) && result >= 0 && result <= 100) {
+                        if (expression.includes('/') && !isCleanDivision(expression)) continue;
+                        answer = result;
+                        displayExp = expression.replace(/\*/g, '×').replace(/\//g, '÷');
+                        break;
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+            return { expression: displayExp, answer: answer, raw: expression };
+        }
+
+        // --- UI Functions ---
+        function updateUI() {
+            document.getElementById('gold-display').innerText = state.gold;
+            document.getElementById('rep-display').innerText = state.rep;
+            
+            renderInventory();
+            renderRecipes();
+            renderCustomers();
+            renderCraftingTable();
+            renderServingCounter();
+            renderMission();
+        }
+
+        function renderMission() {
+            const bar = document.getElementById('mission-bar');
+            if (mission.active) {
+                bar.style.display = 'block';
+                let desc = "";
+                if (mission.type === 'serve') desc = `손님 ${mission.goal}명 서빙하기`;
+                else if (mission.type === 'gold') desc = `골드 ${mission.goal}G 벌기`;
+                
+                document.getElementById('mission-desc').innerText = desc;
+                document.getElementById('mission-progress').innerText = mission.current;
+                document.getElementById('mission-goal').innerText = mission.goal;
+                document.getElementById('mission-timer').innerText = mission.timeLeft;
+                
+                // Urgency effect
+                if (mission.timeLeft <= 10) {
+                    bar.style.backgroundColor = '#ffcdd2';
+                    bar.style.color = 'red';
+                } else {
+                    bar.style.backgroundColor = '#ffccbc';
+                    bar.style.color = '#bf360c';
+                }
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '';
+            ingredients.forEach(item => {
+                const count = state.inventory[item.id] || 0;
+                const div = document.createElement('div');
+                div.className = 'item-card draggable-item';
+                div.draggable = true;
+                div.ondragstart = (e) => dragStartIngredient(e, item.id);
+                
+                div.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div><b>${item.name}</b></div>
+                    <div>보유: ${count}</div>
+                    <button class="btn" onclick="startGathering('${item.id}')" style="font-size:0.7rem; padding:3px;">구하기</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renderRecipes() {
+            const list = document.getElementById('upgrade-list');
+            list.innerHTML = '';
+            recipes.forEach(recipe => {
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                
+                if (recipe.unlocked) {
+                    div.style.border = activeRecipeId === recipe.id ? '2px solid blue' : '1px solid #ddd';
+                    div.style.backgroundColor = activeRecipeId === recipe.id ? '#e3f2fd' : 'white';
+                    div.onclick = () => selectRecipe(recipe.id);
+                    div.innerHTML = `
+                        <div class="item-icon" style="font-size:1.5rem;">${recipe.icon}</div>
+                        <div><b>${recipe.name}</b></div>
+                        <div style="font-size:0.8rem;">선택하기</div>
+                    `;
+                } else {
+                    div.style.backgroundColor = '#eee';
+                    div.innerHTML = `
+                        <div class="item-icon" style="font-size:1.5rem; filter:grayscale(100%);">${recipe.icon}</div>
+                        <div><b>${recipe.name}</b></div>
+                        <div>비용: ${recipe.unlockCost}G</div>
+                        <button class="btn" onclick="unlockRecipe('${recipe.id}')" ${state.gold < recipe.unlockCost ? 'disabled' : ''}>해금</button>
+                    `;
+                }
+                list.appendChild(div);
+            });
+        }
+
+        function renderCraftingTable() {
+            const container = document.getElementById('crafting-slots');
+            const info = document.getElementById('current-recipe-info');
+            const btn = document.getElementById('craft-btn');
+
+            if (!activeRecipeId) {
+                container.innerHTML = '<div style="color:#999; padding:20px;">메뉴를 먼저 선택해주세요.</div>';
+                info.innerText = "만들 메뉴를 레시피북에서 선택하세요!";
+                btn.disabled = true;
+                return;
+            }
+
+            const recipe = recipes.find(r => r.id === activeRecipeId);
+            info.innerHTML = `현재 제작 중: <b>${recipe.name}</b> ${recipe.icon}`;
+            
+            container.innerHTML = '';
+            let allFilled = true;
+
+            for (const [ingId, reqQty] of Object.entries(recipe.req)) {
+                const currentQty = craftingSlots[ingId] || 0;
+                const ingInfo = ingredients.find(i => i.id === ingId);
+                
+                const slotDiv = document.createElement('div');
+                slotDiv.className = `slot ${currentQty >= reqQty ? 'active' : ''}`;
+                slotDiv.ondragover = (e) => allowDrop(e);
+                slotDiv.ondrop = (e) => dropIngredient(e, ingId);
+                
+                let content = '';
+                if (currentQty > 0) {
+                    content = `<div class="item-icon" style="font-size:1.5rem;">${ingInfo.icon}</div>`;
+                } else {
+                    content = `<div class="item-icon" style="font-size:1.5rem; opacity:0.3;">${ingInfo.icon}</div>`;
+                }
+                
+                slotDiv.innerHTML = `
+                    ${content}
+                    <div class="slot-label">${ingInfo.name} ${currentQty}/${reqQty}</div>
+                `;
+                container.appendChild(slotDiv);
+
+                if (currentQty < reqQty) allFilled = false;
+            }
+
+            btn.disabled = !allFilled || finishedDrink !== null; 
+            if (finishedDrink !== null) {
+                btn.innerText = "음료 수령 필요";
+            } else {
+                btn.innerText = "만들기 (문제 풀기)";
+            }
+        }
+
+        function renderServingCounter() {
+            const counter = document.getElementById('serving-counter');
+            counter.innerHTML = '';
+
+            if (finishedDrink) {
+                const drinkDiv = document.createElement('div');
+                drinkDiv.className = 'drink-item';
+                drinkDiv.draggable = true;
+                drinkDiv.ondragstart = (e) => dragStartDrink(e);
+                
+                let qualityIcon = '';
+                let recipeIcon = '';
+                
+                if (finishedDrink.quality === 'F') {
+                    recipeIcon = '🗑️';
+                    qualityIcon = '💩';
+                } else {
+                    const recipe = recipes.find(r => r.id === finishedDrink.recipeId);
+                    recipeIcon = recipe.icon;
+                    if (finishedDrink.quality === 'S') qualityIcon = '👑'; 
+                    else if (finishedDrink.quality === 'A') qualityIcon = '⭐'; 
+                    else if (finishedDrink.quality === 'B') qualityIcon = '🙂'; 
+                }
+                
+                drinkDiv.innerHTML = `
+                    ${recipeIcon}
+                    <div class="drink-quality">${qualityIcon}</div>
+                `;
+                counter.appendChild(drinkDiv);
+            } else {
+                counter.innerHTML = '<div style="color: #999;">음료가 완성되면 여기에 나타납니다.<br>손님에게 드래그해서 서빙하세요!</div>';
+            }
+        }
+
+        function renderCustomers() {
+            const list = document.getElementById('customer-list');
+            list.innerHTML = '';
+            if (state.customers.length === 0) {
+                list.innerHTML = '<p>손님을 기다리는 중...</p>';
+                return;
+            }
+
+            state.customers.forEach((customer, index) => {
+                const recipe = recipes.find(r => r.id === customer.orderId);
+                const div = document.createElement('div');
+                div.className = 'customer-card';
+                div.ondragover = (e) => allowDrop(e);
+                div.ondrop = (e) => dropDrink(e, index);
+                div.ondragenter = (e) => e.currentTarget.classList.add('drag-over');
+                div.ondragleave = (e) => e.currentTarget.classList.remove('drag-over');
+
+                div.innerHTML = `
+                    <div>
+                        <strong>${customer.name}</strong><br>
+                        주문: ${recipe.icon} ${recipe.name}
+                    </div>
+                    <div style="font-size:0.8rem; color:red;">
+                        (대기 중)
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // --- Drag & Drop ---
+        function dragStartIngredient(e, itemId) {
+            e.dataTransfer.setData("type", "ingredient");
+            e.dataTransfer.setData("itemId", itemId);
+        }
+
+        function allowDrop(e) { e.preventDefault(); }
+
+        function dropIngredient(e, targetIngId) {
+            e.preventDefault();
+            const type = e.dataTransfer.getData("type");
+            const itemId = e.dataTransfer.getData("itemId");
+
+            if (type !== "ingredient") return;
+            if (itemId !== targetIngId) {
+                alert("이 칸에는 다른 재료가 들어갑니다!");
+                return;
+            }
+
+            if (state.inventory[itemId] > 0) {
+                const recipe = recipes.find(r => r.id === activeRecipeId);
+                const currentQty = craftingSlots[itemId] || 0;
+                if (currentQty < recipe.req[itemId]) {
+                    state.inventory[itemId]--;
+                    craftingSlots[itemId] = currentQty + 1;
+                    updateUI();
+                } else {
+                    alert("이미 필요한 만큼 넣었습니다.");
+                }
+            } else {
+                alert("재료가 부족합니다! 창고에서 구해주세요.");
+            }
+        }
+
+        function dragStartDrink(e) {
+            e.dataTransfer.setData("type", "drink");
+        }
+
+        function dropDrink(e, customerIndex) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const type = e.dataTransfer.getData("type");
+
+            if (type !== "drink") return;
+            if (!finishedDrink) return;
+
+            const customer = state.customers[customerIndex];
+            
+            if (finishedDrink.quality === 'F') {
+                serveCustomer(customerIndex, 'F');
+            } else if (customer.orderId === finishedDrink.recipeId) {
+                serveCustomer(customerIndex, finishedDrink.quality);
+            } else {
+                alert("이 손님이 주문한 음료가 아닙니다!");
+            }
+        }
+
+        // --- Actions ---
+        function selectRecipe(recipeId) {
+            if (craftingSlots && Object.keys(craftingSlots).length > 0) {
+                for (const [ingId, qty] of Object.entries(craftingSlots)) {
+                    state.inventory[ingId] += qty;
+                }
+            }
+            activeRecipeId = recipeId;
+            craftingSlots = {};
+            finishedDrink = null;
+            updateUI();
+        }
+
+        function startGathering(itemId) {
+            currentAction = { type: 'gather', itemId: itemId };
+            currentAttempts = 0; 
+            const problem = generateProblem('easy');
+            openModal(problem, `${ingredients.find(i => i.id === itemId).name} 구하기`);
+        }
+
+        function startCraftingMath() {
+            if (!activeRecipeId) return;
+            const recipe = recipes.find(r => r.id === activeRecipeId);
+            
+            currentAction = { type: 'craft', recipeId: activeRecipeId };
+            currentAttempts = 0; 
+
+            let difficulty = recipe.difficulty;
+            if (difficulty === 'very-hard') difficulty = 'hard'; 
+            
+            const problem = generateProblem(difficulty);
+            openModal(problem, `${recipe.name} 제조 중...`);
+        }
+
+        function unlockRecipe(id) {
+            const recipe = recipes.find(r => r.id === id);
+            if (state.gold >= recipe.unlockCost) {
+                state.gold -= recipe.unlockCost;
+                recipe.unlocked = true;
+                updateUI();
+            }
+        }
+
+        function serveCustomer(index, quality) {
+            const customer = state.customers[index];
+            const recipe = recipes.find(r => r.id === customer.orderId);
+            
+            let reward = recipe.price;
+            let repChange = 0;
+            let msg = "";
+
+            if (quality === 'S') { 
+                reward = Math.floor(reward * 1.5);
+                repChange = 10;
+                msg = "완벽한 음료입니다! 손님이 매우 만족했습니다! (보상 1.5배)";
+            } else if (quality === 'A') { 
+                reward = Math.floor(reward * 1.2);
+                repChange = 5;
+                msg = "맛있는 음료입니다. 손님이 만족했습니다. (보상 1.2배)";
+            } else if (quality === 'B') { 
+                reward = reward; 
+                repChange = 2;
+                msg = "평범한 음료입니다. (정상 가격)";
+            } else if (quality === 'F') { 
+                reward = 0;
+                repChange = -10;
+                msg = "으악! 음식물 쓰레기를 서빙했습니다! 손님이 화를 냅니다.";
+            }
+
+            alert(msg);
+
+            state.gold += reward;
+            state.rep += repChange;
+            state.customers.splice(index, 1);
+            
+            // Mission Progress Check
+            if (mission.active) {
+                if (mission.type === 'serve' && quality !== 'F') {
+                    mission.current++;
+                } else if (mission.type === 'gold') {
+                    mission.current += reward;
+                }
+                checkMissionSuccess();
+            }
+            
+            finishedDrink = null;
+            craftingSlots = {};
+            updateUI();
+        }
+
+        // --- Mission System ---
+        function startMission() {
+            if (mission.active) return;
+
+            // Random Mission
+            const type = Math.random() < 0.5 ? 'serve' : 'gold';
+            let goal = 0;
+            
+            if (type === 'serve') goal = getRandomInt(2, 4); // Serve 2-4 customers
+            else goal = getRandomInt(100, 300); // Earn 100-300 Gold
+
+            mission.active = true;
+            mission.type = type;
+            mission.goal = goal;
+            mission.current = 0;
+            mission.timeLeft = 60; // 60 seconds
+            
+            alert(`🔥 긴급 미션 발생! 🔥\n${type === 'serve' ? '손님 ' + goal + '명 서빙하기' : '골드 ' + goal + 'G 벌기'}\n제한시간: 60초`);
+            
+            updateUI();
+
+            mission.timerId = setInterval(() => {
+                mission.timeLeft--;
+                if (mission.timeLeft <= 0) {
+                    gameOver();
+                }
+                updateUI();
+            }, 1000);
+        }
+
+        function checkMissionSuccess() {
+            if (!mission.active) return;
+            
+            if (mission.current >= mission.goal) {
+                clearInterval(mission.timerId);
+                mission.active = false;
+                alert("🎉 미션 성공! 보너스 100G 획득! 🎉");
+                state.gold += 100;
+                mission.nextMissionTime = gameTime + 60; // Next mission in 60s
+                updateUI();
+            }
+        }
+
+        function gameOver() {
+            clearInterval(mission.timerId);
+            clearInterval(gameLoopId);
+            document.getElementById('final-rep').innerText = state.rep;
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+
+        // --- Modal & Logic ---
+        function openModal(problem, title) {
+            currentProblem = problem;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('problem-display').innerText = problem.expression;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('result-msg').innerText = '';
+            document.getElementById('math-modal').style.display = 'flex';
+            document.getElementById('answer-input').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('math-modal').style.display = 'none';
+            currentProblem = null;
+            currentAction = null;
+        }
+
+        function checkAnswer() {
+            if (!currentProblem) return;
+
+            const input = parseInt(document.getElementById('answer-input').value);
+            const msgBox = document.getElementById('result-msg');
+
+            if (input === currentProblem.answer) {
+                msgBox.innerText = "정답입니다! ⭕";
+                msgBox.className = "result-message correct";
+                
+                setTimeout(() => {
+                    handleSuccess();
+                    closeModal();
+                }, 1000);
+            } else {
+                currentAttempts++;
+                if (currentAction.type === 'craft') {
+                    if (currentAttempts >= 3) {
+                        msgBox.innerText = "3번 틀렸습니다... 제조 실패! 😱";
+                        msgBox.className = "result-message wrong";
+                        setTimeout(() => {
+                            handleFailure();
+                            closeModal();
+                        }, 2000);
+                    } else {
+                        msgBox.innerText = `틀렸습니다! 다시 계산해보세요. (남은 기회: ${3 - currentAttempts}번)`;
+                        msgBox.className = "result-message wrong";
+                        document.getElementById('answer-input').value = '';
+                        document.getElementById('answer-input').focus();
+                    }
+                } else {
+                    msgBox.innerText = `틀렸습니다! 정답은 ${currentProblem.answer} 입니다.`;
+                    msgBox.className = "result-message wrong";
+                    setTimeout(() => {
+                        closeModal(); 
+                    }, 2000);
+                }
+            }
+        }
+
+        function handleSuccess() {
+            if (currentAction.type === 'gather') {
+                state.inventory[currentAction.itemId]++;
+                state.rep += 1;
+            } else if (currentAction.type === 'craft') {
+                let quality = 'B';
+                if (currentAttempts === 0) quality = 'S'; 
+                else if (currentAttempts === 1) quality = 'A'; 
+                else if (currentAttempts === 2) quality = 'B'; 
+
+                finishedDrink = {
+                    recipeId: currentAction.recipeId,
+                    quality: quality
+                };
+                craftingSlots = {}; 
+            }
+            updateUI();
+        }
+
+        function handleFailure() {
+            if (currentAction.type === 'craft') {
+                finishedDrink = {
+                    recipeId: currentAction.recipeId,
+                    quality: 'F' 
+                };
+                craftingSlots = {};
+                alert("으악! 음료 제작에 실패해서 음식물쓰레기가 나왔어!");
+            }
+            updateUI();
+        }
+
+        // --- Game Loop ---
+        gameLoopId = setInterval(() => {
+            gameTime++;
+            
+            // Customer Spawner
+            if (state.customers.length < 3 && Math.random() < 0.3) { // 30% chance every second if slots open
+                const unlockedRecipes = recipes.filter(r => r.unlocked);
+                if (unlockedRecipes.length > 0) {
+                    const randomRecipe = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
+                    const randomName = customerNames[Math.floor(Math.random() * customerNames.length)];
+                    state.customers.push({ 
+                        orderId: randomRecipe.id, 
+                        name: randomName,
+                        time: Date.now() 
+                    });
+                    updateUI();
+                }
+            }
+
+            // Mission Trigger
+            if (!mission.active && gameTime >= mission.nextMissionTime) {
+                startMission();
+            }
+
+        }, 1000); // Loop every 1 second
+
+        updateUI();
+
+    </script>
+</body>
+</html>
