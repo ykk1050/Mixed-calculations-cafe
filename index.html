@@ -28,8 +28,21 @@
             align-items: center;
             height: 100vh;
             user-select: none;
-            touch-action: none; /* Prevent browser zooming/scrolling gestures globally if possible, or handle carefully */
-            overflow: hidden; /* Prevent scroll for game app feel */
+            touch-action: none;
+            overflow: hidden;
+            transition: background-color 0.5s;
+        }
+        
+        body.fever-mode {
+            background-color: #ffecb3;
+            background-image: linear-gradient(45deg, #ffe082 25%, transparent 25%, transparent 50%, #ffe082 50%, #ffe082 75%, transparent 75%, transparent);
+            background-size: 40px 40px;
+            animation: feverBg 1s linear infinite;
+        }
+        
+        @keyframes feverBg {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
         }
 
         /* Header & Stats */
@@ -50,16 +63,45 @@
             font-weight: bold;
         }
 
+        /* Combo & Fever UI */
+        #combo-container {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            font-weight: bold;
+            color: #d84315;
+            text-shadow: 1px 1px 0 #fff;
+            z-index: 20;
+            pointer-events: none;
+        }
+        
+        #combo-count {
+            font-size: 1.5rem;
+            display: block;
+        }
+        
+        #fever-text {
+            font-size: 2rem;
+            color: #ff6f00;
+            display: none;
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
         /* Mission Bar */
         #mission-bar {
             width: 100%;
-            background-color: var(--mission-bg);
-            border-bottom: 2px solid var(--mission-border);
+            background-color: #fff3e0;
+            border-bottom: 2px solid #ff9800;
+            color: #e65100;
             padding: 10px;
             text-align: center;
             font-weight: bold;
-            color: #bf360c;
-            display: none; 
+            display: block; 
             animation: slideDown 0.5s ease-out;
         }
 
@@ -157,7 +199,7 @@
 
         .draggable-item {
             cursor: grab;
-            touch-action: none; /* Important for touch drag */
+            touch-action: none; 
         }
         .draggable-item:active {
             cursor: grabbing;
@@ -253,11 +295,69 @@
             justify-content: space-between;
             align-items: center;
             transition: background-color 0.2s;
+            position: relative;
         }
 
         .customer-card.drag-over {
             background-color: #e8f5e9;
             border-left-color: #4caf50;
+        }
+
+        .patience-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: #eee;
+        }
+        
+        .patience-bar {
+            height: 100%;
+            background-color: #4caf50;
+            width: 100%;
+            transition: width 0.2s linear, background-color 0.2s;
+        }
+
+        /* Visual Effects */
+        .effect-container {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: translate(-50%, -50%); /* Center on coordinate */
+        }
+
+        @keyframes ripple-anim {
+            0% { width: 0; height: 0; opacity: 0.8; border-width: 5px; }
+            100% { width: 100px; height: 100px; opacity: 0; border-width: 0; }
+        }
+        .effect-ripple {
+            border-radius: 50%;
+            border: 2px solid #795548;
+            background: rgba(255, 255, 255, 0.3);
+            animation: ripple-anim 0.5s ease-out forwards;
+        }
+
+        @keyframes burst-anim {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+            100% { transform: scale(2) rotate(360deg); opacity: 0; }
+        }
+        .effect-burst {
+            font-size: 4rem;
+            animation: burst-anim 0.8s ease-out forwards;
+        }
+
+        @keyframes float-hearts-anim {
+            0% { transform: translateY(0) scale(0.5); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+        .effect-hearts {
+            font-size: 3rem;
+            animation: float-hearts-anim 1s ease-out forwards;
         }
 
         /* Modal (Math Problem) */
@@ -366,10 +466,15 @@
         <div style="font-size: 0.9rem;">( ) 괄호 먼저 ➔ ×÷ 왼쪽부터 ➔ +- 왼쪽부터</div>
     </header>
 
-    <div id="mission-bar">
-        🔥 미션: <span id="mission-desc">손님 2명 서빙하기</span> 
-        (<span id="mission-progress">0</span>/<span id="mission-goal">2</span>) 
-        ⏳ 남은 시간: <span id="mission-timer">60</span>초
+    <div id="combo-container">
+        <span id="combo-count"></span>
+        <div id="fever-text">🔥 FEVER TIME! 🔥</div>
+    </div>
+
+    <div id="mission-bar" style="display: block; background-color: #fff3e0; border-bottom: 2px solid #ff9800; color: #e65100;">
+        🚩 <span id="level-display">Stage 1</span>: <span id="mission-desc">목표 설정 중...</span> 
+        (<span id="mission-progress">0</span>/<span id="mission-goal">0</span>) 
+        ⏳ <span id="mission-timer">0</span>초
     </div>
 
     <div id="game-container">
@@ -492,17 +597,20 @@
             gold: 0,
             rep: 0,
             inventory: { bean: 10, water: 10, milk: 5, sugar: 5, ice: 5 },
-            customers: []
+            customers: [], // { orderId, name, time, maxPatience, currentPatience }
+            combo: 0,
+            fever: false,
+            feverTime: 0
         };
 
-        let mission = {
-            active: false,
-            type: null, // 'serve', 'gold'
-            goal: 0,
+        // --- Level System ---
+        let levelState = {
+            level: 1,
+            type: 'serve', // 'serve', 'gold', 'perfect'
+            target: 0,
             current: 0,
             timeLeft: 0,
-            timerId: null,
-            nextMissionTime: 30
+            timerId: null
         };
 
         let gameTime = 0;
@@ -614,36 +722,57 @@
             document.getElementById('gold-display').innerText = state.gold;
             document.getElementById('rep-display').innerText = state.rep;
             
+            updateComboUI();
             renderInventory();
             renderRecipes();
             renderCustomers();
             renderCraftingTable();
             renderServingCounter();
-            renderMission();
+            renderLevelInfo();
         }
 
-        function renderMission() {
-            const bar = document.getElementById('mission-bar');
-            if (mission.active) {
-                bar.style.display = 'block';
-                let desc = "";
-                if (mission.type === 'serve') desc = `손님 ${mission.goal}명 서빙하기`;
-                else if (mission.type === 'gold') desc = `골드 ${mission.goal}G 벌기`;
-                
-                document.getElementById('mission-desc').innerText = desc;
-                document.getElementById('mission-progress').innerText = mission.current;
-                document.getElementById('mission-goal').innerText = mission.goal;
-                document.getElementById('mission-timer').innerText = mission.timeLeft;
-                
-                if (mission.timeLeft <= 10) {
-                    bar.style.backgroundColor = '#ffcdd2';
-                    bar.style.color = 'red';
-                } else {
-                    bar.style.backgroundColor = '#ffccbc';
-                    bar.style.color = '#bf360c';
-                }
+        function updateComboUI() {
+            const comboEl = document.getElementById('combo-count');
+            const feverEl = document.getElementById('fever-text');
+            
+            if (state.combo > 1) {
+                comboEl.innerText = `${state.combo} COMBO!`;
+                comboEl.style.display = 'block';
             } else {
-                bar.style.display = 'none';
+                comboEl.style.display = 'none';
+            }
+
+            if (state.fever) {
+                feverEl.style.display = 'block';
+                document.body.classList.add('fever-mode');
+            } else {
+                feverEl.style.display = 'none';
+                document.body.classList.remove('fever-mode');
+            }
+        }
+
+        function renderLevelInfo() {
+            const bar = document.getElementById('mission-bar');
+            document.getElementById('level-display').innerText = `Stage ${levelState.level}`;
+            
+            let desc = "";
+            if (levelState.type === 'serve') desc = `손님 ${levelState.target}명 서빙`;
+            else if (levelState.type === 'gold') desc = `골드 ${levelState.target}G 벌기`;
+            else if (levelState.type === 'perfect') desc = `완벽한 음료(👑) ${levelState.target}잔 서빙`;
+            
+            document.getElementById('mission-desc').innerText = desc;
+            document.getElementById('mission-progress').innerText = levelState.current;
+            document.getElementById('mission-goal').innerText = levelState.target;
+            document.getElementById('mission-timer').innerText = levelState.timeLeft;
+            
+            if (levelState.timeLeft <= 10) {
+                bar.style.backgroundColor = '#ffcdd2';
+                bar.style.color = 'red';
+                bar.style.borderBottomColor = 'red';
+            } else {
+                bar.style.backgroundColor = '#fff3e0';
+                bar.style.color = '#e65100';
+                bar.style.borderBottomColor = '#ff9800';
             }
         }
 
@@ -796,6 +925,11 @@
 
             state.customers.forEach((customer, index) => {
                 const recipe = recipes.find(r => r.id === customer.orderId);
+                const patiencePct = (customer.currentPatience / customer.maxPatience) * 100;
+                let barColor = '#4caf50';
+                if (patiencePct < 30) barColor = '#f44336';
+                else if (patiencePct < 60) barColor = '#ff9800';
+
                 const div = document.createElement('div');
                 div.className = 'customer-card';
                 div.dataset.targetType = 'customer';
@@ -806,16 +940,39 @@
                 div.ondragleave = (e) => e.currentTarget.classList.remove('drag-over');
 
                 div.innerHTML = `
-                    <div>
-                        <strong>${customer.name}</strong><br>
-                        주문: ${recipe.icon} ${recipe.name}
-                    </div>
-                    <div style="font-size:0.8rem; color:red;">
-                        (대기 중)
+                    <div style="width:100%">
+                        <div style="display:flex; justify-content:space-between;">
+                            <strong>${customer.name}</strong>
+                            <span style="font-size:0.8rem; color:#666;">주문: ${recipe.icon} ${recipe.name}</span>
+                        </div>
+                        <div class="patience-bar-container">
+                            <div class="patience-bar" style="width:${patiencePct}%; background-color:${barColor};"></div>
+                        </div>
                     </div>
                 `;
                 list.appendChild(div);
             });
+        }
+
+        // --- Visual Effects Helper ---
+        function createVisualEffect(x, y, type) {
+            const el = document.createElement('div');
+            el.className = 'effect-container';
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            
+            if (type === 'ingredient') {
+                const ripple = document.createElement('div');
+                ripple.className = 'effect-ripple';
+                el.appendChild(ripple);
+            } else if (type === 'craft') {
+                el.innerHTML = '<div class="effect-burst">✨</div>';
+            } else if (type === 'serve') {
+                el.innerHTML = '<div class="effect-hearts">💖</div>';
+            }
+            
+            document.body.appendChild(el);
+            setTimeout(() => document.body.removeChild(el), 1000);
         }
 
         // --- Drag & Drop (Mouse) ---
@@ -830,14 +987,16 @@
             e.preventDefault();
             const type = e.dataTransfer.getData("type");
             const itemId = e.dataTransfer.getData("itemId");
-            handleIngredientDrop(type, itemId, targetIngId);
+            if (handleIngredientDrop(type, itemId, targetIngId)) {
+                createVisualEffect(e.clientX, e.clientY, 'ingredient');
+            }
         }
 
         function handleIngredientDrop(type, itemId, targetIngId) {
-            if (type !== "ingredient") return;
+            if (type !== "ingredient") return false;
             if (itemId !== targetIngId) {
                 alert("이 칸에는 다른 재료가 들어갑니다!");
-                return;
+                return false;
             }
 
             if (state.inventory[itemId] > 0) {
@@ -847,11 +1006,14 @@
                     state.inventory[itemId]--;
                     craftingSlots[itemId] = currentQty + 1;
                     updateUI();
+                    return true;
                 } else {
                     alert("이미 필요한 만큼 넣었습니다.");
+                    return false;
                 }
             } else {
                 alert("재료가 부족합니다! 창고에서 구해주세요.");
+                return false;
             }
         }
 
@@ -863,21 +1025,26 @@
             e.preventDefault();
             e.currentTarget.classList.remove('drag-over');
             const type = e.dataTransfer.getData("type");
-            handleDrinkDrop(type, customerIndex);
+            if (handleDrinkDrop(type, customerIndex)) {
+                createVisualEffect(e.clientX, e.clientY, 'serve');
+            }
         }
 
         function handleDrinkDrop(type, customerIndex) {
-            if (type !== "drink") return;
-            if (!finishedDrink) return;
+            if (type !== "drink") return false;
+            if (!finishedDrink) return false;
 
             const customer = state.customers[customerIndex];
             
             if (finishedDrink.quality === 'F') {
                 serveCustomer(customerIndex, 'F');
+                return true;
             } else if (customer.orderId === finishedDrink.recipeId) {
                 serveCustomer(customerIndex, finishedDrink.quality);
+                return true;
             } else {
                 alert("이 손님이 주문한 음료가 아닙니다!");
+                return false;
             }
         }
 
@@ -890,14 +1057,11 @@
         document.addEventListener('touchstart', function(e) {
             const target = e.target.closest('.draggable-item, .drink-item');
             if (!target) return;
-
-            // Only handle drag if it's not a button click inside the item
             if (e.target.tagName === 'BUTTON') return;
 
-            e.preventDefault(); // Prevent scroll
+            e.preventDefault(); 
             draggingItem = target;
             
-            // Create Ghost
             dragGhost = target.cloneNode(true);
             dragGhost.classList.add('drag-ghost');
             dragGhost.style.width = target.offsetWidth + 'px';
@@ -916,7 +1080,7 @@
 
         document.addEventListener('touchmove', function(e) {
             if (!dragGhost) return;
-            e.preventDefault(); // Prevent scroll
+            e.preventDefault(); 
 
             const touch = e.touches[0];
             dragGhost.style.left = (touch.clientX - dragOffsetX) + 'px';
@@ -926,9 +1090,8 @@
         document.addEventListener('touchend', function(e) {
             if (!dragGhost) return;
             
-            // Find drop target
             const touch = e.changedTouches[0];
-            dragGhost.style.display = 'none'; // Hide to find element below
+            dragGhost.style.display = 'none'; 
             let elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
             dragGhost.style.display = 'block';
             
@@ -939,14 +1102,17 @@
                 if (draggingItem.dataset.type === 'ingredient' && slotTarget) {
                     const itemId = draggingItem.dataset.itemId;
                     const targetIngId = slotTarget.dataset.ingId;
-                    handleIngredientDrop('ingredient', itemId, targetIngId);
+                    if (handleIngredientDrop('ingredient', itemId, targetIngId)) {
+                        createVisualEffect(touch.clientX, touch.clientY, 'ingredient');
+                    }
                 } else if (draggingItem.dataset.type === 'drink' && customerTarget) {
                     const index = parseInt(customerTarget.dataset.index);
-                    handleDrinkDrop('drink', index);
+                    if (handleDrinkDrop('drink', index)) {
+                        createVisualEffect(touch.clientX, touch.clientY, 'serve');
+                    }
                 }
             }
 
-            // Cleanup
             document.body.removeChild(dragGhost);
             dragGhost = null;
             draggingItem = null;
@@ -1004,6 +1170,11 @@
             let repChange = 0;
             let msg = "";
 
+            // Fever Multiplier
+            if (state.fever) {
+                reward *= 2;
+            }
+
             if (quality === 'S') { 
                 reward = Math.floor(reward * 1.5);
                 repChange = 10;
@@ -1022,70 +1193,94 @@
                 msg = "으악! 음식물 쓰레기를 서빙했습니다! 손님이 화를 냅니다.";
             }
 
-            alert(msg);
+            if (state.fever) msg += " (FEVER x2)";
+
+            // alert(msg); // Removed alert for smoother gameplay with effects
 
             state.gold += reward;
             state.rep += repChange;
             state.customers.splice(index, 1);
             
-            if (mission.active) {
-                if (mission.type === 'serve' && quality !== 'F') {
-                    mission.current++;
-                } else if (mission.type === 'gold') {
-                    mission.current += reward;
-                }
-                checkMissionSuccess();
+            // Level Progress Check
+            if (levelState.type === 'serve' && quality !== 'F') {
+                levelState.current++;
+            } else if (levelState.type === 'gold') {
+                levelState.current += reward;
+            } else if (levelState.type === 'perfect' && quality === 'S') {
+                levelState.current++;
             }
+            checkLevelSuccess();
             
             finishedDrink = null;
             craftingSlots = {};
             updateUI();
         }
 
-        // --- Mission System ---
-        function startMission() {
-            if (mission.active) return;
-
-            const type = Math.random() < 0.5 ? 'serve' : 'gold';
-            let goal = 0;
+        // --- Level System ---
+        function startLevel(level) {
+            levelState.level = level;
+            levelState.current = 0;
             
-            if (type === 'serve') goal = getRandomInt(2, 4); 
-            else goal = getRandomInt(100, 300); 
-
-            mission.active = true;
-            mission.type = type;
-            mission.goal = goal;
-            mission.current = 0;
-            mission.timeLeft = 60; 
+            if (level === 1) {
+                levelState.type = 'serve';
+                levelState.target = 2;
+                levelState.timeLeft = 120;
+            } else if (level === 2) {
+                levelState.type = 'gold';
+                levelState.target = 100;
+                levelState.timeLeft = 150;
+            } else if (level === 3) {
+                levelState.type = 'perfect';
+                levelState.target = 2;
+                levelState.timeLeft = 180;
+            } else {
+                const typeRoll = Math.random();
+                if (typeRoll < 0.4) {
+                    levelState.type = 'serve';
+                    levelState.target = 3 + Math.floor((level - 3) * 0.5);
+                    levelState.timeLeft = 120 + (level * 10);
+                } else if (typeRoll < 0.7) {
+                    levelState.type = 'gold';
+                    levelState.target = 200 + ((level - 3) * 100);
+                    levelState.timeLeft = 150 + (level * 10);
+                } else {
+                    levelState.type = 'perfect';
+                    levelState.target = 2 + Math.floor((level - 3) * 0.3);
+                    levelState.timeLeft = 180 + (level * 10);
+                }
+            }
             
-            alert(`🔥 긴급 미션 발생! 🔥\n${type === 'serve' ? '손님 ' + goal + '명 서빙하기' : '골드 ' + goal + 'G 벌기'}\n제한시간: 60초`);
-            
+            alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
             updateUI();
 
-            mission.timerId = setInterval(() => {
-                mission.timeLeft--;
-                if (mission.timeLeft <= 0) {
+            if (levelState.timerId) clearInterval(levelState.timerId);
+            levelState.timerId = setInterval(() => {
+                levelState.timeLeft--;
+                if (levelState.timeLeft <= 0) {
                     gameOver();
                 }
                 updateUI();
             }, 1000);
         }
 
-        function checkMissionSuccess() {
-            if (!mission.active) return;
-            
-            if (mission.current >= mission.goal) {
-                clearInterval(mission.timerId);
-                mission.active = false;
-                alert("🎉 미션 성공! 보너스 100G 획득! 🎉");
-                state.gold += 100;
-                mission.nextMissionTime = gameTime + 60; 
-                updateUI();
+        function getLevelDesc(state) {
+            if (state.type === 'serve') return `손님 ${state.target}명 서빙`;
+            if (state.type === 'gold') return `골드 ${state.target}G 벌기`;
+            if (state.type === 'perfect') return `완벽한 음료 ${state.target}잔 서빙`;
+            return "";
+        }
+
+        function checkLevelSuccess() {
+            if (levelState.current >= levelState.target) {
+                clearInterval(levelState.timerId);
+                alert(`🎉 Stage ${levelState.level} 클리어! 보너스 50G 획득! 🎉`);
+                state.gold += 50;
+                startLevel(levelState.level + 1);
             }
         }
 
         function gameOver() {
-            clearInterval(mission.timerId);
+            clearInterval(levelState.timerId);
             clearInterval(gameLoopId);
             document.getElementById('final-rep').innerText = state.rep;
             document.getElementById('game-over-modal').style.display = 'flex';
@@ -1118,11 +1313,23 @@
                 msgBox.innerText = "정답입니다! ⭕";
                 msgBox.className = "result-message correct";
                 
+                // Combo Logic
+                if (currentAction.type === 'craft') {
+                    state.combo++;
+                    if (state.combo >= 3 && !state.fever) {
+                        activateFever();
+                    }
+                }
+
                 setTimeout(() => {
                     handleSuccess();
                     closeModal();
                 }, 1000);
             } else {
+                // Break Combo
+                state.combo = 0;
+                endFever();
+
                 currentAttempts++;
                 if (currentAction.type === 'craft') {
                     if (currentAttempts >= 3) {
@@ -1146,6 +1353,27 @@
                     }, 2000);
                 }
             }
+            updateUI();
+        }
+
+        function activateFever() {
+            state.fever = true;
+            state.feverTime = 15; // 15 seconds
+            
+            const feverTimer = setInterval(() => {
+                state.feverTime--;
+                if (state.feverTime <= 0) {
+                    clearInterval(feverTimer);
+                    endFever();
+                }
+            }, 1000);
+        }
+
+        function endFever() {
+            state.fever = false;
+            state.feverTime = 0;
+            state.combo = 0;
+            updateUI();
         }
 
         function handleSuccess() {
@@ -1163,6 +1391,11 @@
                     quality: quality
                 };
                 craftingSlots = {}; 
+                
+                // Trigger Craft Success Effect
+                const counter = document.getElementById('serving-counter');
+                const rect = counter.getBoundingClientRect();
+                createVisualEffect(rect.left + rect.width/2, rect.top + rect.height/2, 'craft');
             }
             updateUI();
         }
@@ -1183,26 +1416,45 @@
         gameLoopId = setInterval(() => {
             gameTime++;
             
+            // Customer Spawner
             if (state.customers.length < 3 && Math.random() < 0.3) { 
                 const unlockedRecipes = recipes.filter(r => r.unlocked);
                 if (unlockedRecipes.length > 0) {
                     const randomRecipe = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
                     const randomName = customerNames[Math.floor(Math.random() * customerNames.length)];
+                    
+                    // Patience: 30s to 60s based on difficulty
+                    const patience = 30 + getRandomInt(0, 30);
+
                     state.customers.push({ 
                         orderId: randomRecipe.id, 
                         name: randomName,
-                        time: Date.now() 
+                        time: Date.now(),
+                        maxPatience: patience,
+                        currentPatience: patience
                     });
                     updateUI();
                 }
             }
 
-            if (!mission.active && gameTime >= mission.nextMissionTime) {
-                startMission();
+            // Update Patience
+            for (let i = state.customers.length - 1; i >= 0; i--) {
+                const c = state.customers[i];
+                c.currentPatience--;
+                if (c.currentPatience <= 0) {
+                    // Customer leaves angry
+                    state.customers.splice(i, 1);
+                    state.rep -= 5;
+                    updateUI();
+                }
             }
+            
+            updateUI();
 
         }, 1000); 
 
+        // Start Game
+        startLevel(1);
         updateUI();
 
     </script>
