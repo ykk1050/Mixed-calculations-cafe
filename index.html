@@ -28,7 +28,6 @@
             align-items: center;
             height: 100vh;
             user-select: none;
-            /* touch-action: none; Removed to allow scrolling in panels */
             overflow: hidden;
             transition: background-color 0.5s;
         }
@@ -199,7 +198,7 @@
 
         .draggable-item {
             cursor: grab;
-            touch-action: none; /* Prevent scrolling when touching items */
+            touch-action: none; 
         }
         .draggable-item:active {
             cursor: grabbing;
@@ -231,11 +230,19 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         
         .slot.active {
             border-color: var(--primary-btn);
             background-color: #fff;
+        }
+        
+        .slot.highlight-drop {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px #4caf50;
+            border-color: #4caf50;
+            background-color: #e8f5e9;
         }
 
         .slot-label {
@@ -294,13 +301,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.2s;
             position: relative;
         }
 
         .customer-card.drag-over {
             background-color: #e8f5e9;
             border-left-color: #4caf50;
+            transform: scale(1.02);
+        }
+        
+        .customer-card.highlight-drop {
+            box-shadow: 0 0 10px #2196f3;
+            border-left-color: #2196f3;
         }
 
         .patience-bar-container {
@@ -320,44 +333,55 @@
         }
 
         /* Visual Effects */
-        .effect-container {
+        .particle {
             position: fixed;
             pointer-events: none;
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transform: translate(-50%, -50%); /* Center on coordinate */
-        }
-
-        @keyframes ripple-anim {
-            0% { width: 0; height: 0; opacity: 0.8; border-width: 5px; }
-            100% { width: 100px; height: 100px; opacity: 0; border-width: 0; }
-        }
-        .effect-ripple {
+            z-index: 10000;
             border-radius: 50%;
-            border: 2px solid #795548;
-            background: rgba(255, 255, 255, 0.3);
-            animation: ripple-anim 0.5s ease-out forwards;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
         }
 
-        @keyframes burst-anim {
-            0% { transform: scale(0) rotate(0deg); opacity: 1; }
-            50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
-            100% { transform: scale(2) rotate(360deg); opacity: 0; }
+        @keyframes pop-out {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+            50% { opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
-        .effect-burst {
-            font-size: 4rem;
-            animation: burst-anim 0.8s ease-out forwards;
+        
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-150px) scale(2) rotate(20deg); opacity: 0; }
         }
 
-        @keyframes float-hearts-anim {
-            0% { transform: translateY(0) scale(0.5); opacity: 1; }
-            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
-        .effect-hearts {
-            font-size: 3rem;
-            animation: float-hearts-anim 1s ease-out forwards;
+
+        .shake-effect {
+            animation: shake 0.5s;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 9998;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
         }
 
         /* Modal (Math Problem) */
@@ -555,7 +579,7 @@
             <h1 style="font-size: 3rem; margin-bottom: 20px;">GAME OVER</h1>
             <p style="font-size: 1.5rem;">미션 실패! 카페가 파산했습니다.</p>
             <p>최종 평판: <span id="final-rep">0</span></p>
-            <button class="btn" onclick="location.reload()" style="font-size: 1.5rem; padding: 15px 30px; margin-top: 20px;">다시 시작하기</button>
+            <button class="btn" onclick="restartGame()" style="font-size: 1.5rem; padding: 15px 30px; margin-top: 20px;">다시 시작하기</button>
         </div>
     </div>
 
@@ -615,6 +639,7 @@
 
         let gameTime = 0;
         let gameLoopId = null;
+        let isGameOver = false;
 
         let currentProblem = null;
         let currentAction = null; 
@@ -956,23 +981,71 @@
 
         // --- Visual Effects Helper ---
         function createVisualEffect(x, y, type) {
-            const el = document.createElement('div');
-            el.className = 'effect-container';
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
+            const count = type === 'craft' ? 40 : 20; // More particles for craft
+            const colors = type === 'ingredient' ? ['#fff', '#a1887f', '#d7ccc8'] : 
+                           type === 'serve' ? ['#ffeb3b', '#ff9800', '#f44336', '#e91e63'] : 
+                           ['#fff', '#ffd700', '#ffeb3b', '#00e676']; // Craft colors
             
-            if (type === 'ingredient') {
-                const ripple = document.createElement('div');
-                ripple.className = 'effect-ripple';
-                el.appendChild(ripple);
-            } else if (type === 'craft') {
-                el.innerHTML = '<div class="effect-burst">✨</div>';
-            } else if (type === 'serve') {
-                el.innerHTML = '<div class="effect-hearts">💖</div>';
+            // Screen Shake for big events
+            if (type === 'craft' || type === 'serve') {
+                document.body.classList.add('shake-effect');
+                setTimeout(() => document.body.classList.remove('shake-effect'), 500);
             }
-            
-            document.body.appendChild(el);
-            setTimeout(() => document.body.removeChild(el), 1000);
+
+            for(let i=0; i<count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                
+                // Random Size
+                const size = 8 + Math.random() * 15;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Random direction & distance
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 80 + Math.random() * 120; // Further distance
+                const tx = Math.cos(angle) * dist + 'px';
+                const ty = Math.sin(angle) * dist + 'px';
+                
+                p.style.setProperty('--tx', tx);
+                p.style.setProperty('--ty', ty);
+                p.style.animation = `pop-out 0.8s ease-out forwards`;
+                
+                document.body.appendChild(p);
+                setTimeout(() => document.body.removeChild(p), 800);
+            }
+
+            if (type === 'serve') {
+                // Floating Hearts
+                for(let i=0; i<5; i++) {
+                    const heart = document.createElement('div');
+                    heart.innerText = ['💖', '🥰', '😍', '⭐', '👍'][i];
+                    heart.style.position = 'fixed';
+                    heart.style.left = (x - 30 + Math.random() * 60) + 'px';
+                    heart.style.top = (y - 30 + Math.random() * 60) + 'px';
+                    heart.style.fontSize = (2 + Math.random()) + 'rem';
+                    heart.style.pointerEvents = 'none';
+                    heart.style.zIndex = 10001;
+                    heart.style.animation = `float-up ${1 + Math.random()}s ease-out forwards`;
+                    document.body.appendChild(heart);
+                    setTimeout(() => document.body.removeChild(heart), 1500);
+                }
+            }
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animationDuration = (2 + Math.random() * 3) + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => document.body.removeChild(confetti), 5000);
+            }
         }
 
         // --- Drag & Drop (Mouse) ---
@@ -1025,6 +1098,16 @@
             e.preventDefault();
             e.currentTarget.classList.remove('drag-over');
             const type = e.dataTransfer.getData("type");
+            
+            // Ensure index is valid number
+            if (typeof customerIndex !== 'number') {
+                // Try to get from target if passed as event or string
+                const target = e.currentTarget;
+                if (target && target.dataset.index) {
+                    customerIndex = parseInt(target.dataset.index);
+                }
+            }
+
             if (handleDrinkDrop(type, customerIndex)) {
                 createVisualEffect(e.clientX, e.clientY, 'serve');
             }
@@ -1033,6 +1116,9 @@
         function handleDrinkDrop(type, customerIndex) {
             if (type !== "drink") return false;
             if (!finishedDrink) return false;
+
+            // Validate index
+            if (customerIndex < 0 || customerIndex >= state.customers.length) return false;
 
             const customer = state.customers[customerIndex];
             
@@ -1053,10 +1139,25 @@
         let draggingItem = null;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
-        let activeTouchId = null; // Track specific touch ID
+        let activeTouchId = null;
+
+        // Highlight Helper
+        function highlightDropZones(type, highlight) {
+            if (type === 'ingredient') {
+                document.querySelectorAll('.slot').forEach(el => {
+                    if (highlight) el.classList.add('highlight-drop');
+                    else el.classList.remove('highlight-drop');
+                });
+            } else if (type === 'drink') {
+                document.querySelectorAll('.customer-card').forEach(el => {
+                    if (highlight) el.classList.add('highlight-drop');
+                    else el.classList.remove('highlight-drop');
+                });
+            }
+        }
 
         document.addEventListener('touchstart', function(e) {
-            if (draggingItem) return; // Prevent picking up another item if one is already active
+            if (draggingItem) return;
 
             const target = e.target.closest('.draggable-item, .drink-item');
             if (!target) return;
@@ -1068,6 +1169,9 @@
             activeTouchId = touch.identifier;
             draggingItem = target;
             
+            // Visual Cue
+            highlightDropZones(target.dataset.type, true);
+
             dragGhost = target.cloneNode(true);
             dragGhost.classList.add('drag-ghost');
             dragGhost.style.width = target.offsetWidth + 'px';
@@ -1087,7 +1191,6 @@
             if (!dragGhost) return;
             e.preventDefault(); 
 
-            // Find the active touch
             for (let i = 0; i < e.changedTouches.length; i++) {
                 if (e.changedTouches[i].identifier === activeTouchId) {
                     const touch = e.changedTouches[i];
@@ -1101,7 +1204,6 @@
         document.addEventListener('touchend', function(e) {
             if (!dragGhost) return;
             
-            // Check if our active touch ended
             let endedTouch = null;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 if (e.changedTouches[i].identifier === activeTouchId) {
@@ -1110,15 +1212,45 @@
                 }
             }
 
-            if (!endedTouch) return; // Not our touch
+            if (!endedTouch) return;
 
+            // Remove Highlight
+            highlightDropZones(draggingItem.dataset.type, false);
+
+            // Hide ghost to detect element underneath
             dragGhost.style.display = 'none'; 
-            let elemBelow = document.elementFromPoint(endedTouch.clientX, endedTouch.clientY);
+            
+            // Helper to find valid target from coordinates
+            function getTargetFromPoint(x, y) {
+                let el = document.elementFromPoint(x, y);
+                if (!el) return null;
+                return {
+                    slot: el.closest('[data-target-type="slot"]'),
+                    customer: el.closest('[data-target-type="customer"]')
+                };
+            }
+
+            // 1. Try detection at touch point
+            let targets = getTargetFromPoint(endedTouch.clientX, endedTouch.clientY);
+            
+            // 2. Fallback: Try detection at ghost center if touch point yielded no valid target
+            if (!targets || (!targets.slot && !targets.customer)) {
+                const ghostRect = dragGhost.getBoundingClientRect();
+                const centerX = ghostRect.left + ghostRect.width / 2;
+                const centerY = ghostRect.top + ghostRect.height / 2;
+                const centerTargets = getTargetFromPoint(centerX, centerY);
+                
+                // Use center targets if found
+                if (centerTargets && (centerTargets.slot || centerTargets.customer)) {
+                    targets = centerTargets;
+                }
+            }
+
             dragGhost.style.display = 'block';
             
-            if (elemBelow) {
-                const slotTarget = elemBelow.closest('[data-target-type="slot"]');
-                const customerTarget = elemBelow.closest('[data-target-type="customer"]');
+            if (targets) {
+                const slotTarget = targets.slot;
+                const customerTarget = targets.customer;
 
                 if (draggingItem.dataset.type === 'ingredient' && slotTarget) {
                     const itemId = draggingItem.dataset.itemId;
@@ -1127,9 +1259,13 @@
                         createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'ingredient');
                     }
                 } else if (draggingItem.dataset.type === 'drink' && customerTarget) {
-                    const index = parseInt(customerTarget.dataset.index);
-                    if (handleDrinkDrop('drink', index)) {
-                        createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'serve');
+                    // Ensure we get a valid index even if touching child elements
+                    const indexStr = customerTarget.dataset.index;
+                    if (indexStr !== undefined && indexStr !== null) {
+                        const index = parseInt(indexStr);
+                        if (handleDrinkDrop('drink', index)) {
+                            createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'serve');
+                        }
                     }
                 }
             }
@@ -1144,11 +1280,11 @@
             if (dragGhost && dragGhost.parentNode) {
                 document.body.removeChild(dragGhost);
             }
+            if (draggingItem) highlightDropZones(draggingItem.dataset.type, false);
             dragGhost = null;
             draggingItem = null;
             activeTouchId = null;
         });
-
 
         // --- Actions ---
         function selectRecipe(recipeId) {
@@ -1247,76 +1383,6 @@
             updateUI();
         }
 
-        // --- Level System ---
-        function startLevel(level) {
-            levelState.level = level;
-            levelState.current = 0;
-            
-            if (level === 1) {
-                levelState.type = 'serve';
-                levelState.target = 2;
-                levelState.timeLeft = 120;
-            } else if (level === 2) {
-                levelState.type = 'gold';
-                levelState.target = 100;
-                levelState.timeLeft = 150;
-            } else if (level === 3) {
-                levelState.type = 'perfect';
-                levelState.target = 2;
-                levelState.timeLeft = 180;
-            } else {
-                const typeRoll = Math.random();
-                if (typeRoll < 0.4) {
-                    levelState.type = 'serve';
-                    levelState.target = 3 + Math.floor((level - 3) * 0.5);
-                    levelState.timeLeft = 120 + (level * 10);
-                } else if (typeRoll < 0.7) {
-                    levelState.type = 'gold';
-                    levelState.target = 200 + ((level - 3) * 100);
-                    levelState.timeLeft = 150 + (level * 10);
-                } else {
-                    levelState.type = 'perfect';
-                    levelState.target = 2 + Math.floor((level - 3) * 0.3);
-                    levelState.timeLeft = 180 + (level * 10);
-                }
-            }
-            
-            alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
-            updateUI();
-
-            if (levelState.timerId) clearInterval(levelState.timerId);
-            levelState.timerId = setInterval(() => {
-                levelState.timeLeft--;
-                if (levelState.timeLeft <= 0) {
-                    gameOver();
-                }
-                updateUI();
-            }, 1000);
-        }
-
-        function getLevelDesc(state) {
-            if (state.type === 'serve') return `손님 ${state.target}명 서빙`;
-            if (state.type === 'gold') return `골드 ${state.target}G 벌기`;
-            if (state.type === 'perfect') return `완벽한 음료 ${state.target}잔 서빙`;
-            return "";
-        }
-
-        function checkLevelSuccess() {
-            if (levelState.current >= levelState.target) {
-                clearInterval(levelState.timerId);
-                alert(`🎉 Stage ${levelState.level} 클리어! 보너스 50G 획득! 🎉`);
-                state.gold += 50;
-                startLevel(levelState.level + 1);
-            }
-        }
-
-        function gameOver() {
-            clearInterval(levelState.timerId);
-            clearInterval(gameLoopId);
-            document.getElementById('final-rep').innerText = state.rep;
-            document.getElementById('game-over-modal').style.display = 'flex';
-        }
-
         // --- Modal & Logic ---
         function openModal(problem, title) {
             currentProblem = problem;
@@ -1377,11 +1443,10 @@
                         document.getElementById('answer-input').focus();
                     }
                 } else {
-                    msgBox.innerText = `틀렸습니다! 정답은 ${currentProblem.answer} 입니다.`;
+                    msgBox.innerText = `틀렸습니다! 다시 계산해보세요.`;
                     msgBox.className = "result-message wrong";
-                    setTimeout(() => {
-                        closeModal(); 
-                    }, 2000);
+                    document.getElementById('answer-input').value = '';
+                    document.getElementById('answer-input').focus();
                 }
             }
             updateUI();
@@ -1391,6 +1456,11 @@
             state.fever = true;
             state.feverTime = 15; // 15 seconds
             
+            // Effect
+            createConfetti();
+            document.body.classList.add('shake-effect');
+            setTimeout(() => document.body.classList.remove('shake-effect'), 500);
+
             const feverTimer = setInterval(() => {
                 state.feverTime--;
                 if (state.feverTime <= 0) {
@@ -1443,8 +1513,86 @@
             updateUI();
         }
 
-        // --- Persistence ---
+        // --- Level System ---
+        function startLevel(level) {
+            levelState.level = level;
+            levelState.current = 0;
+            
+            if (level === 1) {
+                levelState.type = 'serve';
+                levelState.target = 2;
+                levelState.timeLeft = 120;
+            } else if (level === 2) {
+                levelState.type = 'gold';
+                levelState.target = 100;
+                levelState.timeLeft = 150;
+            } else if (level === 3) {
+                levelState.type = 'perfect';
+                levelState.target = 2;
+                levelState.timeLeft = 180;
+            } else {
+                const typeRoll = Math.random();
+                if (typeRoll < 0.4) {
+                    levelState.type = 'serve';
+                    levelState.target = 3 + Math.floor((level - 3) * 0.5);
+                    levelState.timeLeft = 120 + (level * 10);
+                } else if (typeRoll < 0.7) {
+                    levelState.type = 'gold';
+                    levelState.target = 200 + ((level - 3) * 100);
+                    levelState.timeLeft = 150 + (level * 10);
+                } else {
+                    levelState.type = 'perfect';
+                    levelState.target = 2 + Math.floor((level - 3) * 0.3);
+                    levelState.timeLeft = 180 + (level * 10);
+                }
+            }
+            
+            alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
+            updateUI();
+
+            if (levelState.timerId) clearInterval(levelState.timerId);
+            levelState.timerId = setInterval(() => {
+                levelState.timeLeft--;
+                if (levelState.timeLeft <= 0) {
+                    gameOver();
+                }
+                updateUI();
+            }, 1000);
+        }
+
+        function getLevelDesc(state) {
+            if (state.type === 'serve') return `손님 ${state.target}명 서빙`;
+            if (state.type === 'gold') return `골드 ${state.target}G 벌기`;
+            if (state.type === 'perfect') return `완벽한 음료 ${state.target}잔 서빙`;
+            return "";
+        }
+
+        function checkLevelSuccess() {
+            if (levelState.current >= levelState.target) {
+                clearInterval(levelState.timerId);
+                createConfetti();
+                alert(`🎉 Stage ${levelState.level} 클리어! 보너스 50G 획득! 🎉`);
+                state.gold += 50;
+                startLevel(levelState.level + 1);
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(levelState.timerId);
+            clearInterval(gameLoopId);
+            document.getElementById('final-rep').innerText = state.rep;
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+
+        function restartGame() {
+            localStorage.removeItem('baristaGameSave');
+            location.reload();
+        }
+
+        // --- Modal & Logic ---
         function saveGame() {
+            if (isGameOver) return;
             const gameData = {
                 state: state,
                 levelState: levelState,
@@ -1463,14 +1611,12 @@
                 try {
                     const data = JSON.parse(saved);
                     state = data.state;
-                    // Restore recipe unlock status
                     data.recipes.forEach(savedR => {
                         const r = recipes.find(realR => realR.id === savedR.id);
                         if (r) r.unlocked = savedR.unlocked;
                     });
                     levelState = data.levelState;
                     
-                    // Resume Level Timer
                     if (levelState.timerId) clearInterval(levelState.timerId);
                     if (levelState.timeLeft > 0) {
                          levelState.timerId = setInterval(() => {
@@ -1501,17 +1647,14 @@
         gameLoopId = setInterval(() => {
             gameTime++;
             
-            // Auto Save every 5 seconds
             if (gameTime % 5 === 0) saveGame();
             
-            // Customer Spawner
             if (state.customers.length < 3 && Math.random() < 0.3) { 
                 const unlockedRecipes = recipes.filter(r => r.unlocked);
                 if (unlockedRecipes.length > 0) {
                     const randomRecipe = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
                     const randomName = customerNames[Math.floor(Math.random() * customerNames.length)];
                     
-                    // Patience: 30s to 60s based on difficulty
                     const patience = 30 + getRandomInt(0, 30);
 
                     state.customers.push({ 
@@ -1526,14 +1669,15 @@
             }
 
             // Update Patience
-            for (let i = state.customers.length - 1; i >= 0; i--) {
-                const c = state.customers[i];
-                c.currentPatience--;
-                if (c.currentPatience <= 0) {
-                    // Customer leaves angry
-                    state.customers.splice(i, 1);
-                    state.rep -= 5;
-                    updateUI();
+            if (!currentProblem) {
+                for (let i = state.customers.length - 1; i >= 0; i--) {
+                    const c = state.customers[i];
+                    c.currentPatience--;
+                    if (c.currentPatience <= 0) {
+                        state.customers.splice(i, 1);
+                        state.rep -= 5;
+                        updateUI();
+                    }
                 }
             }
             
@@ -1547,7 +1691,6 @@
         }
         updateUI();
 
-        // Save on exit
         window.addEventListener('beforeunload', () => {
             saveGame();
         });
