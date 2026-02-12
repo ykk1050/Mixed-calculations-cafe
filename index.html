@@ -1053,13 +1053,19 @@
         let draggingItem = null;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
+        let activeTouchId = null; // Track specific touch ID
 
         document.addEventListener('touchstart', function(e) {
+            if (draggingItem) return; // Prevent picking up another item if one is already active
+
             const target = e.target.closest('.draggable-item, .drink-item');
             if (!target) return;
             if (e.target.tagName === 'BUTTON') return;
 
             e.preventDefault(); 
+            
+            const touch = e.changedTouches[0];
+            activeTouchId = touch.identifier;
             draggingItem = target;
             
             dragGhost = target.cloneNode(true);
@@ -1067,7 +1073,6 @@
             dragGhost.style.width = target.offsetWidth + 'px';
             dragGhost.style.height = target.offsetHeight + 'px';
             
-            const touch = e.touches[0];
             const rect = target.getBoundingClientRect();
             dragOffsetX = touch.clientX - rect.left;
             dragOffsetY = touch.clientY - rect.top;
@@ -1082,17 +1087,33 @@
             if (!dragGhost) return;
             e.preventDefault(); 
 
-            const touch = e.touches[0];
-            dragGhost.style.left = (touch.clientX - dragOffsetX) + 'px';
-            dragGhost.style.top = (touch.clientY - dragOffsetY) + 'px';
+            // Find the active touch
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === activeTouchId) {
+                    const touch = e.changedTouches[i];
+                    dragGhost.style.left = (touch.clientX - dragOffsetX) + 'px';
+                    dragGhost.style.top = (touch.clientY - dragOffsetY) + 'px';
+                    break;
+                }
+            }
         }, { passive: false });
 
         document.addEventListener('touchend', function(e) {
             if (!dragGhost) return;
             
-            const touch = e.changedTouches[0];
+            // Check if our active touch ended
+            let endedTouch = null;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === activeTouchId) {
+                    endedTouch = e.changedTouches[i];
+                    break;
+                }
+            }
+
+            if (!endedTouch) return; // Not our touch
+
             dragGhost.style.display = 'none'; 
-            let elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            let elemBelow = document.elementFromPoint(endedTouch.clientX, endedTouch.clientY);
             dragGhost.style.display = 'block';
             
             if (elemBelow) {
@@ -1103,12 +1124,12 @@
                     const itemId = draggingItem.dataset.itemId;
                     const targetIngId = slotTarget.dataset.ingId;
                     if (handleIngredientDrop('ingredient', itemId, targetIngId)) {
-                        createVisualEffect(touch.clientX, touch.clientY, 'ingredient');
+                        createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'ingredient');
                     }
                 } else if (draggingItem.dataset.type === 'drink' && customerTarget) {
                     const index = parseInt(customerTarget.dataset.index);
                     if (handleDrinkDrop('drink', index)) {
-                        createVisualEffect(touch.clientX, touch.clientY, 'serve');
+                        createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'serve');
                     }
                 }
             }
@@ -1116,6 +1137,7 @@
             document.body.removeChild(dragGhost);
             dragGhost = null;
             draggingItem = null;
+            activeTouchId = null;
         });
 
 
