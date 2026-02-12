@@ -28,7 +28,7 @@
             align-items: center;
             height: 100vh;
             user-select: none;
-            touch-action: none;
+            /* touch-action: none; Removed to allow scrolling in panels */
             overflow: hidden;
             transition: background-color 0.5s;
         }
@@ -199,7 +199,7 @@
 
         .draggable-item {
             cursor: grab;
-            touch-action: none; 
+            touch-action: none; /* Prevent scrolling when touching items */
         }
         .draggable-item:active {
             cursor: grabbing;
@@ -1134,7 +1134,16 @@
                 }
             }
 
-            document.body.removeChild(dragGhost);
+            if (dragGhost.parentNode) document.body.removeChild(dragGhost);
+            dragGhost = null;
+            draggingItem = null;
+            activeTouchId = null;
+        });
+
+        document.addEventListener('touchcancel', function(e) {
+            if (dragGhost && dragGhost.parentNode) {
+                document.body.removeChild(dragGhost);
+            }
             dragGhost = null;
             draggingItem = null;
             activeTouchId = null;
@@ -1434,9 +1443,66 @@
             updateUI();
         }
 
+        // --- Persistence ---
+        function saveGame() {
+            const gameData = {
+                state: state,
+                levelState: levelState,
+                recipes: recipes.map(r => ({id: r.id, unlocked: r.unlocked})),
+                activeRecipeId: activeRecipeId,
+                craftingSlots: craftingSlots,
+                finishedDrink: finishedDrink,
+                gameTime: gameTime
+            };
+            localStorage.setItem('baristaGameSave', JSON.stringify(gameData));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('baristaGameSave');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    state = data.state;
+                    // Restore recipe unlock status
+                    data.recipes.forEach(savedR => {
+                        const r = recipes.find(realR => realR.id === savedR.id);
+                        if (r) r.unlocked = savedR.unlocked;
+                    });
+                    levelState = data.levelState;
+                    
+                    // Resume Level Timer
+                    if (levelState.timerId) clearInterval(levelState.timerId);
+                    if (levelState.timeLeft > 0) {
+                         levelState.timerId = setInterval(() => {
+                            levelState.timeLeft--;
+                            if (levelState.timeLeft <= 0) {
+                                gameOver();
+                            }
+                            updateUI();
+                        }, 1000);
+                    }
+                    
+                    activeRecipeId = data.activeRecipeId;
+                    craftingSlots = data.craftingSlots || {};
+                    finishedDrink = data.finishedDrink;
+                    gameTime = data.gameTime || 0;
+                    
+                    updateUI();
+                    return true;
+                } catch (e) {
+                    console.error("Save load failed", e);
+                    return false;
+                }
+            }
+            return false;
+        }
+
         // --- Game Loop ---
         gameLoopId = setInterval(() => {
             gameTime++;
+            
+            // Auto Save every 5 seconds
+            if (gameTime % 5 === 0) saveGame();
             
             // Customer Spawner
             if (state.customers.length < 3 && Math.random() < 0.3) { 
@@ -1476,8 +1542,15 @@
         }, 1000); 
 
         // Start Game
-        startLevel(1);
+        if (!loadGame()) {
+            startLevel(1);
+        }
         updateUI();
+
+        // Save on exit
+        window.addEventListener('beforeunload', () => {
+            saveGame();
+        });
 
     </script>
 </body>
