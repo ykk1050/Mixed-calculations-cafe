@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>계산왕 바리스타: 자연수 혼합계산 카페</title>
     <style>
         :root {
@@ -28,6 +28,8 @@
             align-items: center;
             height: 100vh;
             user-select: none;
+            touch-action: none; /* Prevent browser zooming/scrolling gestures globally if possible, or handle carefully */
+            overflow: hidden; /* Prevent scroll for game app feel */
         }
 
         /* Header & Stats */
@@ -57,7 +59,7 @@
             text-align: center;
             font-weight: bold;
             color: #bf360c;
-            display: none; /* Hidden by default */
+            display: none; 
             animation: slideDown 0.5s ease-out;
         }
 
@@ -155,6 +157,7 @@
 
         .draggable-item {
             cursor: grab;
+            touch-action: none; /* Important for touch drag */
         }
         .draggable-item:active {
             cursor: grabbing;
@@ -226,6 +229,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             cursor: grab;
             position: relative;
+            touch-action: none;
         }
         
         .drink-quality {
@@ -335,6 +339,15 @@
             border-radius: 20px;
             text-align: center;
             border: 4px solid #d84315;
+        }
+
+        /* Drag Ghost */
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.8;
+            transform: scale(1.1);
         }
 
         /* Areas Grid Layout */
@@ -489,7 +502,7 @@
             current: 0,
             timeLeft: 0,
             timerId: null,
-            nextMissionTime: 30 // First mission after 30s
+            nextMissionTime: 30
         };
 
         let gameTime = 0;
@@ -539,11 +552,9 @@
                         const n2 = getRandomInt(2, 10);
                         const n3 = getRandomInt(2, 10);
                         
-                        // Force Mix: Ensure at least one PM and one MD
                         const op_pm = ops_pm[getRandomInt(0, 1)];
                         const op_md = ops_md[getRandomInt(0, 1)];
                         
-                        // Randomize order
                         let op1, op2;
                         if (Math.random() < 0.5) { op1 = op_pm; op2 = op_md; }
                         else { op1 = op_md; op2 = op_pm; }
@@ -563,13 +574,11 @@
                         const n3 = getRandomInt(2, 10);
                         const n4 = getRandomInt(2, 10);
                         
-                        // Force Mix: Ensure at least one PM and one MD
                         const op_pm = ops_pm[getRandomInt(0, 1)];
                         const op_md = ops_md[getRandomInt(0, 1)];
                         const op_rnd = all_ops[getRandomInt(0, 3)];
                         
                         const ops = [op_pm, op_md, op_rnd];
-                        // Shuffle ops
                         for (let i = ops.length - 1; i > 0; i--) {
                             const j = Math.floor(Math.random() * (i + 1));
                             [ops[i], ops[j]] = [ops[j], ops[i]];
@@ -626,7 +635,6 @@
                 document.getElementById('mission-goal').innerText = mission.goal;
                 document.getElementById('mission-timer').innerText = mission.timeLeft;
                 
-                // Urgency effect
                 if (mission.timeLeft <= 10) {
                     bar.style.backgroundColor = '#ffcdd2';
                     bar.style.color = 'red';
@@ -647,6 +655,8 @@
                 const div = document.createElement('div');
                 div.className = 'item-card draggable-item';
                 div.draggable = true;
+                div.dataset.type = 'ingredient';
+                div.dataset.itemId = item.id;
                 div.ondragstart = (e) => dragStartIngredient(e, item.id);
                 
                 div.innerHTML = `
@@ -712,6 +722,8 @@
                 
                 const slotDiv = document.createElement('div');
                 slotDiv.className = `slot ${currentQty >= reqQty ? 'active' : ''}`;
+                slotDiv.dataset.targetType = 'slot';
+                slotDiv.dataset.ingId = ingId;
                 slotDiv.ondragover = (e) => allowDrop(e);
                 slotDiv.ondrop = (e) => dropIngredient(e, ingId);
                 
@@ -747,6 +759,7 @@
                 const drinkDiv = document.createElement('div');
                 drinkDiv.className = 'drink-item';
                 drinkDiv.draggable = true;
+                drinkDiv.dataset.type = 'drink';
                 drinkDiv.ondragstart = (e) => dragStartDrink(e);
                 
                 let qualityIcon = '';
@@ -785,6 +798,8 @@
                 const recipe = recipes.find(r => r.id === customer.orderId);
                 const div = document.createElement('div');
                 div.className = 'customer-card';
+                div.dataset.targetType = 'customer';
+                div.dataset.index = index;
                 div.ondragover = (e) => allowDrop(e);
                 div.ondrop = (e) => dropDrink(e, index);
                 div.ondragenter = (e) => e.currentTarget.classList.add('drag-over');
@@ -803,7 +818,7 @@
             });
         }
 
-        // --- Drag & Drop ---
+        // --- Drag & Drop (Mouse) ---
         function dragStartIngredient(e, itemId) {
             e.dataTransfer.setData("type", "ingredient");
             e.dataTransfer.setData("itemId", itemId);
@@ -815,7 +830,10 @@
             e.preventDefault();
             const type = e.dataTransfer.getData("type");
             const itemId = e.dataTransfer.getData("itemId");
+            handleIngredientDrop(type, itemId, targetIngId);
+        }
 
+        function handleIngredientDrop(type, itemId, targetIngId) {
             if (type !== "ingredient") return;
             if (itemId !== targetIngId) {
                 alert("이 칸에는 다른 재료가 들어갑니다!");
@@ -845,7 +863,10 @@
             e.preventDefault();
             e.currentTarget.classList.remove('drag-over');
             const type = e.dataTransfer.getData("type");
+            handleDrinkDrop(type, customerIndex);
+        }
 
+        function handleDrinkDrop(type, customerIndex) {
             if (type !== "drink") return;
             if (!finishedDrink) return;
 
@@ -859,6 +880,78 @@
                 alert("이 손님이 주문한 음료가 아닙니다!");
             }
         }
+
+        // --- Touch Drag Logic (Mobile Support) ---
+        let dragGhost = null;
+        let draggingItem = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            const target = e.target.closest('.draggable-item, .drink-item');
+            if (!target) return;
+
+            // Only handle drag if it's not a button click inside the item
+            if (e.target.tagName === 'BUTTON') return;
+
+            e.preventDefault(); // Prevent scroll
+            draggingItem = target;
+            
+            // Create Ghost
+            dragGhost = target.cloneNode(true);
+            dragGhost.classList.add('drag-ghost');
+            dragGhost.style.width = target.offsetWidth + 'px';
+            dragGhost.style.height = target.offsetHeight + 'px';
+            
+            const touch = e.touches[0];
+            const rect = target.getBoundingClientRect();
+            dragOffsetX = touch.clientX - rect.left;
+            dragOffsetY = touch.clientY - rect.top;
+
+            dragGhost.style.left = (touch.clientX - dragOffsetX) + 'px';
+            dragGhost.style.top = (touch.clientY - dragOffsetY) + 'px';
+            
+            document.body.appendChild(dragGhost);
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+            if (!dragGhost) return;
+            e.preventDefault(); // Prevent scroll
+
+            const touch = e.touches[0];
+            dragGhost.style.left = (touch.clientX - dragOffsetX) + 'px';
+            dragGhost.style.top = (touch.clientY - dragOffsetY) + 'px';
+        }, { passive: false });
+
+        document.addEventListener('touchend', function(e) {
+            if (!dragGhost) return;
+            
+            // Find drop target
+            const touch = e.changedTouches[0];
+            dragGhost.style.display = 'none'; // Hide to find element below
+            let elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            dragGhost.style.display = 'block';
+            
+            if (elemBelow) {
+                const slotTarget = elemBelow.closest('[data-target-type="slot"]');
+                const customerTarget = elemBelow.closest('[data-target-type="customer"]');
+
+                if (draggingItem.dataset.type === 'ingredient' && slotTarget) {
+                    const itemId = draggingItem.dataset.itemId;
+                    const targetIngId = slotTarget.dataset.ingId;
+                    handleIngredientDrop('ingredient', itemId, targetIngId);
+                } else if (draggingItem.dataset.type === 'drink' && customerTarget) {
+                    const index = parseInt(customerTarget.dataset.index);
+                    handleDrinkDrop('drink', index);
+                }
+            }
+
+            // Cleanup
+            document.body.removeChild(dragGhost);
+            dragGhost = null;
+            draggingItem = null;
+        });
+
 
         // --- Actions ---
         function selectRecipe(recipeId) {
@@ -935,7 +1028,6 @@
             state.rep += repChange;
             state.customers.splice(index, 1);
             
-            // Mission Progress Check
             if (mission.active) {
                 if (mission.type === 'serve' && quality !== 'F') {
                     mission.current++;
@@ -954,18 +1046,17 @@
         function startMission() {
             if (mission.active) return;
 
-            // Random Mission
             const type = Math.random() < 0.5 ? 'serve' : 'gold';
             let goal = 0;
             
-            if (type === 'serve') goal = getRandomInt(2, 4); // Serve 2-4 customers
-            else goal = getRandomInt(100, 300); // Earn 100-300 Gold
+            if (type === 'serve') goal = getRandomInt(2, 4); 
+            else goal = getRandomInt(100, 300); 
 
             mission.active = true;
             mission.type = type;
             mission.goal = goal;
             mission.current = 0;
-            mission.timeLeft = 60; // 60 seconds
+            mission.timeLeft = 60; 
             
             alert(`🔥 긴급 미션 발생! 🔥\n${type === 'serve' ? '손님 ' + goal + '명 서빙하기' : '골드 ' + goal + 'G 벌기'}\n제한시간: 60초`);
             
@@ -988,7 +1079,7 @@
                 mission.active = false;
                 alert("🎉 미션 성공! 보너스 100G 획득! 🎉");
                 state.gold += 100;
-                mission.nextMissionTime = gameTime + 60; // Next mission in 60s
+                mission.nextMissionTime = gameTime + 60; 
                 updateUI();
             }
         }
@@ -1092,8 +1183,7 @@
         gameLoopId = setInterval(() => {
             gameTime++;
             
-            // Customer Spawner
-            if (state.customers.length < 3 && Math.random() < 0.3) { // 30% chance every second if slots open
+            if (state.customers.length < 3 && Math.random() < 0.3) { 
                 const unlockedRecipes = recipes.filter(r => r.unlocked);
                 if (unlockedRecipes.length > 0) {
                     const randomRecipe = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
@@ -1107,12 +1197,11 @@
                 }
             }
 
-            // Mission Trigger
             if (!mission.active && gameTime >= mission.nextMissionTime) {
                 startMission();
             }
 
-        }, 1000); // Loop every 1 second
+        }, 1000); 
 
         updateUI();
 
