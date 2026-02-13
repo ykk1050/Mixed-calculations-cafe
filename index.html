@@ -479,6 +479,45 @@
         #kitchen-area { grid-area: 1 / 2 / 3 / 3; }
         #order-area { grid-area: 1 / 3 / 2 / 4; }
         #recipe-area { grid-area: 2 / 3 / 3 / 4; }
+        #shop-area { grid-area: 3 / 1 / 4 / 4; margin-top: 15px; }
+
+        /* Shop Styles */
+        .shop-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 8px;
+            background: white;
+            text-align: center;
+            min-width: 120px;
+        }
+        .shop-item img { width: 40px; height: 40px; margin-bottom: 5px; }
+        .shop-category { font-weight: bold; margin: 10px 0 5px; border-bottom: 1px solid #eee; width: 100%; }
+
+        /* Theme Styles */
+        body.theme-cat {
+            background-color: #fff0f5;
+            background-image: radial-gradient(#f8bbd0 15%, transparent 16%), radial-gradient(#f8bbd0 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+        body.theme-cat .panel { border-color: #ec407a; background-color: #fce4ec; }
+        body.theme-cat .btn { background-color: #ec407a; }
+        
+        body.theme-space {
+            background-color: #1a237e;
+            color: #e8eaf6;
+            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+            radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px; 
+            background-position: 0 0, 40px 60px, 130px 270px;
+        }
+        body.theme-space .panel { background-color: #283593; border-color: #7986cb; color: #fff; }
+        body.theme-space .btn { background-color: #3949ab; }
+        body.theme-space .slot { background-color: #303f9f; border-color: #7986cb; }
 
     </style>
 </head>
@@ -553,6 +592,14 @@
                 <!-- JS로 생성 -->
             </div>
         </div>
+
+        <!-- 5. 상점 (Shop) -->
+        <div id="shop-area" class="panel" style="overflow-x: auto;">
+            <h2>🛒 상점 (업그레이드 & 꾸미기)</h2>
+            <div class="item-list" id="shop-list" style="display: flex; gap: 10px; padding-bottom: 10px;">
+                <!-- JS로 생성 -->
+            </div>
+        </div>
     </div>
 
     <!-- Math Modal -->
@@ -583,31 +630,87 @@
         </div>
     </div>
 
+    <!-- Cheat Controls -->
+    <div style="position: fixed; bottom: 10px; right: 10px; opacity: 0.8; z-index: 9000; display: flex; gap: 5px;">
+        <button class="btn" onclick="cheatAddGold()" style="background: #ffd700; color: #000; border: 1px solid #daa520;">💰 +2만G</button>
+        <button class="btn" onclick="cheatAddIngredients()" style="background: #81c784; color: #000; border: 1px solid #388e3c;">📦 재료 +10</button>
+    </div>
+
     <script>
         // --- Game Data ---
         const ingredients = [
-            { id: 'bean', name: '원두', icon: '<img src="coffeebeans.png" alt="원두">' },
+            // Liquids
             { id: 'water', name: '물', icon: '💧' },
             { id: 'milk', name: '우유', icon: '🥛' },
-            { id: 'sugar', name: '시럽', icon: '🍬' },
+            { id: 'sparkling', name: '탄산수', icon: '🫧' },
+            
+            // Coffee
+            { id: 'bean', name: '원두', icon: '<img src="coffeebeans.png" alt="원두">' },
+            
+            // Powders
+            { id: 'matcha', name: '말차 가루', icon: '🍵' },
+            { id: 'yogurt_p', name: '요거트 파우더', icon: '🥡' },
+            { id: 'cinnamon', name: '시나몬 가루', icon: '🍂' },
+            { id: 'choco_p', name: '초코 가루', icon: '🍫' },
+            
+            // Syrups/Sauces
+            { id: 'vanilla', name: '바닐라 시럽', icon: '🧴' },
+            { id: 'choco_s', name: '초코 소스', icon: '🤎' },
+            { id: 'caramel', name: '카라멜 드리즐', icon: '🍯' },
+            { id: 'sugar', name: '설탕 시럽', icon: '🍬' },
+            
+            // Tea
+            { id: 'black_tea', name: '홍차 잎', icon: '🍂' },
+            { id: 'chamomile', name: '캐모마일 티백', icon: '🌼' },
+            { id: 'earlgrey', name: '얼그레이 티백', icon: '🌿' },
+            
+            // Fruits/Base
+            { id: 'strawberry', name: '딸기 청', icon: '🍓' },
+            { id: 'sweet_potato', name: '고구마 페이스트', icon: '🍠' },
+            { id: 'peach', name: '복숭아 베이스', icon: '🍑' },
+            { id: 'lemon', name: '레몬 청', icon: '🍋' },
+            { id: 'grapefruit', name: '자몽 청', icon: '🍊' },
+            { id: 'grape', name: '청포도 베이스', icon: '🍇' },
+            { id: 'mango', name: '망고 베이스', icon: '🥭' },
+            
+            // Toppings/Others
+            { id: 'whip', name: '휘핑크림', icon: '☁️' },
+            { id: 'cream', name: '수제 크림', icon: '🧁' },
+            { id: 'ice_cream', name: '바닐라 아이스크림', icon: '🍨' },
+            { id: 'javachip', name: '자바칩', icon: '🍪' },
             { id: 'ice', name: '얼음', icon: '🧊' }
         ];
 
         const recipes = [
-            // Unlocked Initially (3+)
-            { id: 'espresso', name: '에스프레소', icon: '🥃', req: { bean: 3 }, price: 40, difficulty: 'medium', unlocked: true, unlockCost: 0 },
-            { id: 'americano', name: '아메리카노', icon: '☕', req: { bean: 2, water: 2 }, price: 50, difficulty: 'medium', unlocked: true, unlockCost: 0 },
-            { id: 'latte', name: '카페라떼', icon: '🥛', req: { bean: 2, milk: 3 }, price: 80, difficulty: 'hard', unlocked: true, unlockCost: 0 },
-            
-            // Unlockable
-            { id: 'ice_americano', name: '아이스 아메', icon: '🧊☕', req: { bean: 2, water: 1, ice: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 100 },
-            { id: 'cappuccino', name: '카푸치노', icon: '🥯', req: { bean: 2, milk: 2 }, price: 85, difficulty: 'hard', unlocked: false, unlockCost: 150 },
-            { id: 'vanilla_latte', name: '바닐라라떼', icon: '🍦', req: { bean: 2, milk: 2, sugar: 1 }, price: 90, difficulty: 'hard', unlocked: false, unlockCost: 200 },
-            { id: 'mocha', name: '카페모카', icon: '🍫', req: { bean: 2, milk: 1, sugar: 2 }, price: 100, difficulty: 'very-hard', unlocked: false, unlockCost: 250 },
-            { id: 'macchiato', name: '마키아토', icon: '🍮', req: { bean: 2, milk: 1, sugar: 2 }, price: 110, difficulty: 'very-hard', unlocked: false, unlockCost: 300 },
-            { id: 'affogato', name: '아포가토', icon: '🍨', req: { bean: 2, ice: 1, sugar: 1 }, price: 120, difficulty: 'very-hard', unlocked: false, unlockCost: 350 },
-            { id: 'coldbrew', name: '콜드브루', icon: '🏺', req: { bean: 4, water: 2 }, price: 130, difficulty: 'hard', unlocked: false, unlockCost: 400 },
-            { id: 'frappe', name: '프라페', icon: '🥤', req: { bean: 2, milk: 1, ice: 3, sugar: 1 }, price: 150, difficulty: 'very-hard', unlocked: false, unlockCost: 500 }
+            // Coffee
+            { id: 'espresso', name: '에스프레소', icon: '☕', req: { bean: 2 }, price: 30, difficulty: 'medium', unlocked: true, unlockCost: 0 },
+            { id: 'americano', name: '아메리카노', icon: '☕', req: { bean: 2, water: 2 }, price: 40, difficulty: 'medium', unlocked: true, unlockCost: 0 },
+            { id: 'latte', name: '카페라떼', icon: '🥛', req: { bean: 2, milk: 2 }, price: 50, difficulty: 'hard', unlocked: true, unlockCost: 0 },
+            { id: 'cappuccino', name: '카푸치노', icon: '🥯', req: { bean: 2, milk: 2, cinnamon: 1 }, price: 55, difficulty: 'hard', unlocked: false, unlockCost: 150 },
+            { id: 'vanilla_latte', name: '바닐라 라떼', icon: '🍦', req: { bean: 2, milk: 2, vanilla: 1 }, price: 60, difficulty: 'hard', unlocked: false, unlockCost: 200 },
+            { id: 'mocha', name: '카페모카', icon: '🍫', req: { bean: 2, milk: 2, choco_s: 1, whip: 1 }, price: 65, difficulty: 'very-hard', unlocked: false, unlockCost: 250 },
+            { id: 'caramel_macchiato', name: '카라멜 마키아토', icon: '🍮', req: { bean: 2, milk: 2, vanilla: 1, caramel: 1 }, price: 70, difficulty: 'very-hard', unlocked: false, unlockCost: 300 },
+            { id: 'einspanner', name: '아인슈페너', icon: '🍺', req: { bean: 2, water: 1, cream: 1 }, price: 65, difficulty: 'hard', unlocked: false, unlockCost: 350 },
+            { id: 'coldbrew', name: '콜드브루', icon: '🏺', req: { bean: 3, water: 2 }, price: 60, difficulty: 'hard', unlocked: false, unlockCost: 400 },
+            { id: 'affogato', name: '아포가토', icon: '🍨', req: { bean: 2, ice_cream: 1 }, price: 70, difficulty: 'medium', unlocked: false, unlockCost: 450 },
+
+            // Non-Coffee Latte & Tea
+            { id: 'choco_latte', name: '초코 라떼', icon: '🍫', req: { choco_p: 2, milk: 2, whip: 1 }, price: 55, difficulty: 'medium', unlocked: false, unlockCost: 200 },
+            { id: 'matcha_latte', name: '녹차 라떼', icon: '🍵', req: { matcha: 2, milk: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 250 },
+            { id: 'sweet_potato_latte', name: '고구마 라떼', icon: '🍠', req: { sweet_potato: 2, milk: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 300 },
+            { id: 'milktea', name: '밀크티', icon: '🧋', req: { black_tea: 2, milk: 2, sugar: 1 }, price: 60, difficulty: 'hard', unlocked: false, unlockCost: 300 },
+            { id: 'strawberry_latte', name: '딸기 라떼', icon: '🍓', req: { strawberry: 2, milk: 2 }, price: 65, difficulty: 'medium', unlocked: false, unlockCost: 350 },
+            { id: 'chamomile', name: '캐모마일 티', icon: '🌼', req: { chamomile: 1, water: 2 }, price: 45, difficulty: 'easy', unlocked: false, unlockCost: 150 },
+            { id: 'earlgrey', name: '얼그레이 티', icon: '🌿', req: { earlgrey: 1, water: 2 }, price: 45, difficulty: 'easy', unlocked: false, unlockCost: 150 },
+            { id: 'peach_iced_tea', name: '복숭아 아이스티', icon: '🍑', req: { peach: 2, water: 2, ice: 2 }, price: 50, difficulty: 'medium', unlocked: false, unlockCost: 200 },
+
+            // Ade & Smoothie
+            { id: 'lemonade', name: '레몬 에이드', icon: '🍋', req: { lemon: 2, sparkling: 2, ice: 2 }, price: 55, difficulty: 'medium', unlocked: false, unlockCost: 250 },
+            { id: 'grapefruit_ade', name: '자몽 에이드', icon: '🍊', req: { grapefruit: 2, sparkling: 2, ice: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 300 },
+            { id: 'grape_ade', name: '청포도 에이드', icon: '🍇', req: { grape: 2, sparkling: 2, ice: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 300 },
+            { id: 'yogurt_smoothie', name: '요거트 스무디', icon: '🥤', req: { yogurt_p: 2, milk: 1, ice: 3 }, price: 65, difficulty: 'hard', unlocked: false, unlockCost: 400 },
+            { id: 'mango_smoothie', name: '망고 스무디', icon: '🥭', req: { mango: 2, ice: 3, milk: 1 }, price: 70, difficulty: 'hard', unlocked: false, unlockCost: 450 },
+            { id: 'javachip_frappe', name: '자바칩 프라페', icon: '🍪', req: { choco_s: 1, javachip: 2, milk: 1, ice: 3, whip: 1 }, price: 80, difficulty: 'very-hard', unlocked: false, unlockCost: 500 }
         ];
 
         const customerNames = [
@@ -620,12 +723,54 @@
         let state = {
             gold: 0,
             rep: 0,
-            inventory: { bean: 10, water: 10, milk: 5, sugar: 5, ice: 5 },
-            customers: [], // { orderId, name, time, maxPatience, currentPatience }
+            inventory: {
+                // ... (기존 재료)
+                bean: 5, milk: 5, water: 5, sugar: 3,
+                ice: 5, choco: 2, caramel: 2, vanilla: 2,
+                sparkling: 3, lemon: 2, lime: 2, grapefruit: 2,
+                strawberry: 2, blueberry: 2, mango: 2, peach: 2,
+                matcha: 2, black_tea: 2, mint: 2,
+                whip: 2, cinnamon: 2, herb: 2, java_chip: 2,
+                yogurt: 2, honey: 2, cream: 2
+            },
+            customers: [],
             combo: 0,
             fever: false,
-            feverTime: 0
+            feverTime: 0,
+            
+            // New Shop & Upgrade State
+            upgrades: {
+                autoWhisk: false, // 자동 거품기 (우유 메뉴 난이도 하락)
+                premiumMachine: false, // 고급 원두 머신 (커피 골드 +20%)
+                adBoard: false, // 광고판 (손님 방문 속도 증가)
+                autoGather: 0, // 재료 알바 (남은 시간 ms)
+                autoServe: 0, // 서빙 알바 (남은 시간 ms)
+            },
+            theme: 'default', // 'default', 'cat', 'space'
+            bgm: 'default', // 'default', 'jazz', 'lofi', 'pop'
+            unlockedItems: [] // 구매한 아이템 ID 목록
         };
+
+        const shopItems = [
+            // 1. Upgrades
+            { id: 'autoWhisk', name: '자동 거품기', price: 500, type: 'upgrade', desc: '우유 메뉴 문제 난이도 하락', icon: '🥛' },
+            { id: 'premiumMachine', name: '고급 원두 머신', price: 1000, type: 'upgrade', desc: '커피 메뉴 판매 시 골드 +20%', icon: '☕' },
+            { id: 'adBoard', name: '광고판', price: 800, type: 'upgrade', desc: '손님이 더 자주 방문함', icon: '📢' },
+            
+            // 2. Consumables / Staff
+            { id: 'candyBasket', name: '사탕 바구니', price: 300, type: 'consumable', desc: '모든 손님 인내심 50% 회복', icon: '🍬' },
+            { id: 'staffGather', name: '재료 담당 알바', price: 500, type: 'staff', desc: '3분간 재료 부족 시 자동 채움', icon: '👩‍🌾', duration: 180000 },
+            { id: 'staffServe', name: '서빙 담당 알바', price: 800, type: 'staff', desc: '3분간 완성된 음료 자동 서빙', icon: '🏃', duration: 180000 },
+
+            // 3. Themes
+            { id: 'theme_cat', name: '고양이 카페', price: 1000, type: 'theme', desc: '야옹~ 고양이 테마 적용', icon: '🐱', themeId: 'cat' },
+            { id: 'theme_space', name: '우주 정거장', price: 2000, type: 'theme', desc: '무중력 우주 테마 적용', icon: '🚀', themeId: 'space' },
+
+            // 4. BGM (Simulated for now)
+            { id: 'bgm_jazz', name: '재즈 음악', price: 300, type: 'bgm', desc: '부드러운 재즈 선율', icon: '🎷', bgmId: 'jazz' },
+            { id: 'bgm_lofi', name: 'Lo-fi 음악', price: 300, type: 'bgm', desc: '차분한 Lo-fi 비트', icon: '🎧', bgmId: 'lofi' },
+            { id: 'bgm_pop', name: 'Pop 음악', price: 300, type: 'bgm', desc: '신나는 팝 음악', icon: '🎸', bgmId: 'pop' }
+        ];
 
         // --- Level System ---
         let levelState = {
@@ -753,7 +898,136 @@
             renderCustomers();
             renderCraftingTable();
             renderServingCounter();
+            renderShop(); // New Shop UI
             renderLevelInfo();
+        }
+
+        function renderShop() {
+            const list = document.getElementById('shop-list');
+            list.innerHTML = '';
+            
+            shopItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'shop-item';
+                
+                let btnText = "구매";
+                let btnDisabled = state.gold < item.price;
+                let isOwned = false;
+
+                // Check ownership/status
+                if (item.type === 'upgrade') {
+                    if (state.upgrades[item.id]) {
+                        btnText = "보유중";
+                        btnDisabled = true;
+                        isOwned = true;
+                    }
+                } else if (item.type === 'theme') {
+                    if (state.unlockedItems.includes(item.id)) {
+                        if (state.theme === item.themeId) {
+                            btnText = "적용중";
+                            btnDisabled = true;
+                        } else {
+                            btnText = "적용";
+                            btnDisabled = false;
+                        }
+                        isOwned = true;
+                    }
+                } else if (item.type === 'bgm') {
+                    if (state.unlockedItems.includes(item.id)) {
+                        if (state.bgm === item.bgmId) {
+                            btnText = "재생중";
+                            btnDisabled = true;
+                        } else {
+                            btnText = "재생";
+                            btnDisabled = false;
+                        }
+                        isOwned = true;
+                    }
+                } else if (item.type === 'staff') {
+                    if (state.upgrades[item.id] > 0) {
+                        const timeLeft = Math.ceil(state.upgrades[item.id] / 1000);
+                        btnText = `${timeLeft}초 남음`;
+                        btnDisabled = true;
+                    }
+                }
+
+                div.innerHTML = `
+                    <div style="font-size: 2rem;">${item.icon}</div>
+                    <div style="font-weight:bold; margin:5px 0;">${item.name}</div>
+                    <div style="font-size:0.8rem; color:#666; height:30px; margin-bottom:5px;">${item.desc}</div>
+                    <div style="font-weight:bold; color:#d84315;">${isOwned && item.type !== 'consumable' && item.type !== 'staff' ? '구매완료' : item.price + 'G'}</div>
+                    <button class="btn" onclick="buyShopItem('${item.id}')" ${btnDisabled ? 'disabled' : ''} style="width:100%; margin-top:5px;">
+                        ${btnText}
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function buyShopItem(itemId) {
+            const item = shopItems.find(i => i.id === itemId);
+            
+            // Logic for applying owned items (Theme/BGM)
+            if (item.type === 'theme' && state.unlockedItems.includes(itemId)) {
+                applyTheme(item.themeId);
+                return;
+            }
+            if (item.type === 'bgm' && state.unlockedItems.includes(itemId)) {
+                applyBgm(item.bgmId);
+                return;
+            }
+
+            if (state.gold >= item.price) {
+                state.gold -= item.price;
+                
+                if (item.type === 'upgrade') {
+                    state.upgrades[item.id] = true;
+                    alert(`${item.name} 구매 완료! 효과가 적용됩니다.`);
+                } else if (item.type === 'consumable') {
+                    if (item.id === 'candyBasket') {
+                        state.customers.forEach(c => {
+                            c.currentPatience = Math.min(c.maxPatience, c.currentPatience + (c.maxPatience * 0.5));
+                        });
+                        alert("모든 손님의 인내심이 회복되었습니다! 🍬");
+                    }
+                } else if (item.type === 'staff') {
+                    state.upgrades[item.id] = item.duration;
+                    alert(`${item.name} 고용 완료! 3분간 열심히 일합니다.`);
+                } else if (item.type === 'theme') {
+                    state.unlockedItems.push(item.id);
+                    applyTheme(item.themeId);
+                    alert(`${item.name} 테마를 획득했습니다!`);
+                } else if (item.type === 'bgm') {
+                    state.unlockedItems.push(item.id);
+                    applyBgm(item.bgmId);
+                    alert(`${item.name}을 획득했습니다!`);
+                }
+                
+                updateUI();
+            } else {
+                alert("골드가 부족합니다!");
+            }
+        }
+
+        function applyTheme(themeId) {
+            state.theme = themeId;
+            document.body.classList.remove('theme-cat', 'theme-space');
+            if (themeId !== 'default') {
+                document.body.classList.add(`theme-${themeId}`);
+            }
+            updateUI();
+        }
+
+        function applyBgm(bgmId) {
+            state.bgm = bgmId;
+            // Actual Audio implementation would go here
+            // For now, visual feedback
+            const header = document.querySelector('header');
+            if (bgmId === 'jazz') header.style.borderBottom = '3px solid #d4af37';
+            else if (bgmId === 'lofi') header.style.borderBottom = '3px solid #9c27b0';
+            else if (bgmId === 'pop') header.style.borderBottom = '3px solid #ff4081';
+            else header.style.borderBottom = 'none';
+            updateUI();
         }
 
         function updateComboUI() {
@@ -1316,6 +1590,12 @@
             let difficulty = recipe.difficulty;
             if (difficulty === 'very-hard') difficulty = 'hard'; 
             
+            // Upgrade Effect: Auto Whisk (Milk menus easier)
+            if (state.upgrades.autoWhisk && (recipe.req.milk || recipe.req.cream || recipe.req.whip)) {
+                if (difficulty === 'hard') difficulty = 'medium';
+                else if (difficulty === 'medium') difficulty = 'easy';
+            }
+
             const problem = generateProblem(difficulty);
             openModal(problem, `${recipe.name} 제조 중...`);
         }
@@ -1340,6 +1620,15 @@
             // Fever Multiplier
             if (state.fever) {
                 reward *= 2;
+            }
+
+            // Upgrade Effect: Premium Machine
+            if (state.upgrades.premiumMachine) {
+                // Simple check if it's a coffee menu (bean required)
+                if (recipe.req.bean) {
+                    reward = Math.floor(reward * 1.2);
+                    msg = "[고급머신] " + msg;
+                }
             }
 
             if (quality === 'S') { 
@@ -1590,6 +1879,21 @@
             location.reload();
         }
 
+        // --- Cheats ---
+        function cheatAddGold() {
+            state.gold += 20000;
+            updateUI();
+            alert("치트 사용: 골드 20,000G 추가됨!");
+        }
+
+        function cheatAddIngredients() {
+            for (const key in state.inventory) {
+                state.inventory[key] += 10;
+            }
+            updateUI();
+            alert("치트 사용: 모든 재료 10개씩 추가됨!");
+        }
+
         // --- Modal & Logic ---
         function saveGame() {
             if (isGameOver) return;
@@ -1610,7 +1914,20 @@
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    state = data.state;
+                    
+                    // Restore State (Merge to keep new fields)
+                    state = { ...state, ...data.state };
+                    
+                    // Ensure upgrades object exists if loading old save
+                    if (!state.upgrades) state.upgrades = { autoWhisk: false, premiumMachine: false, adBoard: false, autoGather: 0, autoServe: 0 };
+                    if (!state.unlockedItems) state.unlockedItems = [];
+                    if (!state.theme) state.theme = 'default';
+                    if (!state.bgm) state.bgm = 'default';
+
+                    // Apply Theme/BGM on load
+                    applyTheme(state.theme);
+                    applyBgm(state.bgm);
+
                     data.recipes.forEach(savedR => {
                         const r = recipes.find(realR => realR.id === savedR.id);
                         if (r) r.unlocked = savedR.unlocked;
@@ -1650,21 +1967,49 @@
             if (gameTime % 5 === 0) saveGame();
             
             if (state.customers.length < 3 && Math.random() < 0.3) { 
-                const unlockedRecipes = recipes.filter(r => r.unlocked);
-                if (unlockedRecipes.length > 0) {
-                    const randomRecipe = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
-                    const randomName = customerNames[Math.floor(Math.random() * customerNames.length)];
-                    
-                    const patience = 30 + getRandomInt(0, 30);
+                // Upgrade Effect: Ad Board (Faster Spawns)
+                let spawnChance = 0.3;
+                if (state.upgrades.adBoard) spawnChance = 0.5;
 
-                    state.customers.push({ 
-                        orderId: randomRecipe.id, 
-                        name: randomName,
-                        time: Date.now(),
-                        maxPatience: patience,
-                        currentPatience: patience
-                    });
-                    updateUI();
+                if (Math.random() < spawnChance) {
+                    const unlockedRecipes = recipes.filter(r => r.unlocked);
+                    if (unlockedRecipes.length > 0) {
+                        const randomRecipe = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
+                        const randomName = customerNames[Math.floor(Math.random() * customerNames.length)];
+                        
+                        const patience = 30 + getRandomInt(0, 30);
+    
+                        state.customers.push({ 
+                            orderId: randomRecipe.id, 
+                            name: randomName,
+                            time: Date.now(),
+                            maxPatience: patience,
+                            currentPatience: patience
+                        });
+                        updateUI();
+                    }
+                }
+            }
+
+            // Staff Logic
+            if (state.upgrades.staffGather > 0) {
+                state.upgrades.staffGather -= 1000;
+                // Auto gather low ingredients
+                for (const key in state.inventory) {
+                    if (state.inventory[key] < 3 && Math.random() < 0.2) {
+                        state.inventory[key]++;
+                        createVisualEffect(window.innerWidth/2, window.innerHeight/2, 'ingredient');
+                    }
+                }
+            }
+            if (state.upgrades.staffServe > 0) {
+                state.upgrades.staffServe -= 1000;
+                // Auto serve perfect drinks occasionally
+                if (finishedDrink && Math.random() < 0.3) {
+                    const targetIdx = state.customers.findIndex(c => c.orderId === finishedDrink.recipeId);
+                    if (targetIdx !== -1) {
+                         serveCustomer(targetIdx, finishedDrink.quality);
+                    }
                 }
             }
 
