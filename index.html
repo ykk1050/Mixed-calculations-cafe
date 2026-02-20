@@ -686,10 +686,11 @@
                 flex-direction: column;
             }
             .scene {
-                overflow-y: auto;
+                overflow-y: auto !important;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
                 touch-action: pan-y;
+                overscroll-behavior-y: contain;
                 flex: 1;
                 min-height: 0;
                 padding-bottom: 20px;
@@ -1169,7 +1170,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00095</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00096</div>
 
     <script>
         // --- Game Data ---
@@ -2216,8 +2217,14 @@
                 if (t.identifier === pendingDrag.touchId) {
                     const dx = Math.abs(t.clientX - pendingDrag.startX);
                     const dy = Math.abs(t.clientY - pendingDrag.startY);
-                    if (dx >= DRAG_THRESHOLD || dy >= DRAG_THRESHOLD) {
-                        // 드래그 확정: preventDefault 하고 드래그 시작
+                    const dist = Math.max(dx, dy);
+                    if (dist >= DRAG_THRESHOLD) {
+                        // 수직 스크롤 의도(dy > dx)면 드래그 취소, 스크롤 허용
+                        if (dy > dx) {
+                            pendingDrag = null;
+                            return;
+                        }
+                        // 수평/대각선(드래그 의도): preventDefault 하고 드래그 시작
                         e.preventDefault();
                         const target = pendingDrag.target;
                         const startX = pendingDrag.startX;
