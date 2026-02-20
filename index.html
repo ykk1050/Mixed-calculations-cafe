@@ -115,6 +115,8 @@
             height: 100%;
             position: relative;
             overflow: hidden;
+            flex: 1;
+            min-height: 0;
         }
 
         .scene {
@@ -195,9 +197,7 @@
         .customer-img-container {
             width: 250px; /* Increased size */
             height: 350px; /* Taller for full body */
-            /* overflow: hidden; */ /* Removed cropping */
-            /* border-radius: 50%; */ /* Removed circle crop */
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             /* border: 5px solid #eee; */ /* Removed border */
             display: flex;
             align-items: flex-end; /* Align image to bottom */
@@ -216,7 +216,7 @@
             border-radius: 20px;
             padding: 15px;
             position: absolute;
-            top: -80px; /* Adjusted for larger size */
+            top: -55px;
             left: 50%;
             transform: translateX(-50%);
             white-space: nowrap;
@@ -233,7 +233,8 @@
         .customer-name {
             font-weight: bold;
             font-size: 1.2rem;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            margin-top: 2px;
             background: rgba(255,255,255,0.8);
             padding: 2px 8px;
             border-radius: 5px;
@@ -661,38 +662,40 @@
         /* ===== 모바일/스마트패드 반응형 (768px 이하) ===== */
         @media (max-width: 768px) {
             body { overflow: auto; min-height: 100vh; }
-            #scene-container { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            #scene-container { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; }
             
             /* 헤더 축소 */
             header {
-                padding: 6px 8px;
+                padding: 5px 6px;
                 flex-wrap: wrap;
-                gap: 4px;
+                gap: 2px;
+                flex-shrink: 0;
             }
             header > div:last-child {
-                font-size: 0.7rem;
+                font-size: 0.65rem;
                 width: 100%;
                 order: 3;
             }
-            .stat-box { font-size: 0.9rem; }
+            .stat-box { font-size: 0.85rem; }
             
             /* 미션바 축소 */
             #mission-bar {
-                padding: 6px 8px;
-                font-size: 0.85rem;
+                padding: 4px 6px;
+                font-size: 0.8rem;
+                flex-shrink: 0;
             }
             
             /* 씬 패딩 축소 */
-            .scene { padding: 8px; }
+            .scene { padding: 6px; }
             
             /* 카운터 - 고객 영역 축소 */
             .counter-background-wrapper {
                 width: 100%;
-                height: 85%;
+                height: 80%;
             }
             #customer-display-area {
-                bottom: 28%;
-                height: 50%;
+                bottom: 26%;
+                height: 48%;
             }
             .customer-card {
                 width: 140px;
@@ -702,21 +705,21 @@
             .customer-img-container {
                 width: 120px;
                 height: 160px;
-                margin-bottom: 8px;
+                margin-bottom: 4px;
             }
             .customer-order-bubble {
-                padding: 6px 10px;
+                padding: 5px 8px;
                 font-size: 0.85rem;
-                top: -50px;
+                top: -32px;
             }
             .customer-order-bubble img { height: 28px; }
-            .patience-bar-container { margin-top: 3px; }
-            .customer-name { font-size: 0.8rem; padding: 2px 6px; }
+            .patience-bar-container { margin-top: 2px; }
+            .customer-name { font-size: 0.8rem; padding: 2px 6px; margin-top: 1px; margin-bottom: 2px; }
             
             /* 서빙 카운터 */
             .serving-counter-area {
-                min-height: 55px;
-                padding: 8px;
+                min-height: 45px;
+                padding: 6px;
             }
             .serving-counter-label {
                 font-size: 0.75rem;
@@ -802,12 +805,13 @@
         /* 매우 작은 화면 (480px 이하) */
         @media (max-width: 480px) {
             .customer-card { width: 110px; padding: 6px; }
-            .customer-name { font-size: 0.7rem; }
+            .customer-name { font-size: 0.7rem; margin-top: 1px; margin-bottom: 2px; }
             .customer-img-container {
                 width: 95px;
                 height: 130px;
+                margin-bottom: 3px;
             }
-            .customer-order-bubble { font-size: 0.75rem; top: -40px; }
+            .customer-order-bubble { font-size: 0.75rem; top: -26px; padding: 4px 6px; }
             .customer-order-bubble img { height: 22px; }
             
             .item-list { grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); }
@@ -816,6 +820,51 @@
             
             .serving-counter-label { font-size: 0.65rem; }
             .nav-btn { font-size: 0.8rem !important; padding: 6px 10px !important; }
+        }
+        
+        /* 높이가 좁은 화면 (세로가 짧은 기기) */
+        @media (max-height: 600px) {
+            #scene-counter { padding-bottom: 8px; }
+            header { padding: 4px 6px; }
+            header > div:last-child { font-size: 0.6rem; }
+            #mission-bar { padding: 3px 6px; font-size: 0.75rem; }
+            .scene { padding: 4px; }
+            .counter-background-wrapper { height: 75%; }
+            #customer-display-area { bottom: 24%; height: 45%; }
+            .customer-card { padding: 6px; }
+            .customer-img-container {
+                width: 100px;
+                height: 120px;
+                margin-bottom: 3px;
+            }
+            .customer-order-bubble { top: -28px; padding: 4px 6px; font-size: 0.75rem; }
+            .customer-order-bubble img { height: 22px; }
+            .customer-name { font-size: 0.7rem; margin-top: 0; margin-bottom: 1px; }
+            .serving-counter-area { min-height: 38px; padding: 5px; }
+            .serving-counter-label { font-size: 0.7rem; }
+            .nav-btn { padding: 5px 8px !important; font-size: 0.75rem !important; }
+            .serving-counter-wrapper { margin-top: 4px !important; }
+        }
+        
+        /* 높이+너비 모두 좁은 화면 */
+        @media (max-width: 480px) and (max-height: 600px) {
+            .customer-img-container { width: 85px; height: 100px; margin-bottom: 2px; }
+            .customer-order-bubble { top: -22px; padding: 3px 5px; font-size: 0.7rem; }
+            .customer-order-bubble img { height: 18px; }
+            .customer-card { width: 95px; padding: 4px; }
+        }
+
+        /* 버전 정보 (화면 하단, 모든 씬에서 항상 표시) */
+        #version-info {
+            position: fixed;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            color: #666;
+            opacity: 0.9;
+            z-index: 10001;
+            pointer-events: none;
         }
 
     </style>
@@ -852,7 +901,7 @@
                 </div>
             </div>
 
-            <div style="margin-top: auto; width: 100%; text-align: center;">
+            <div class="serving-counter-wrapper" style="margin-top: auto; width: 100%; text-align: center;">
                 <div class="serving-counter-area" id="serving-counter-main">
                     <span class="serving-counter-label">(서빙하려면 끌어서 고객에게 전달하세요)</span>
                     <div class="serving-counter-slots"></div>
@@ -974,6 +1023,8 @@
     </div>
 
     <audio id="bgm-player" loop></audio>
+
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00089</div>
 
     <script>
         // --- Game Data ---
