@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>계산왕 바리스타: 자연수 혼합계산 카페</title>
+    <style>
+        :root {
+            --bg-color: #f4e4bc;
+            --panel-color: #fff8e1;
+            --primary-btn: #6f4e37;
+            --primary-btn-hover: #5d4037;
+            --text-color: #3e2723;
+            --highlight: #d7ccc8;
+            --slot-bg: #efebe9;
+            --mission-bg: #ffccbc;
+            --mission-border: #d84315;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+            overflow: hidden;
+            transition: background-color 0.5s;
+        }
+        
+        body.fever-mode {
+            background-color: #ffecb3;
+            background-image: linear-gradient(45deg, #ffe082 25%, transparent 25%, transparent 50%, #ffe082 50%, #ffe082 75%, transparent 75%, transparent);
+            background-size: 40px 40px;
+            animation: feverBg 1s linear infinite;
+        }
+        
+        @keyframes feverBg {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+
+        /* Header & Stats */
+        header {
+            width: 100%;
+            background-color: var(--primary-btn);
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .stat-box {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        /* Combo & Fever UI */
+        #combo-container {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            font-weight: bold;
+            color: #d84315;
+            text-shadow: 1px 1px 0 #fff;
+            z-index: 20;
+            pointer-events: none;
+        }
+        
+        #combo-count {
+            font-size: 1.5rem;
+            display: block;
+        }
+        
+        #fever-text {
+            font-size: 2rem;
+            color: #ff6f00;
+            display: none;
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        /* Mission Bar */
+        #mission-bar {
+            width: 100%;
+            background-color: #fff3e0;
+            border-bottom: 2px solid #ff9800;
+            color: #e65100;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: block; 
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Scene Container */
+        #scene-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scene {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .scene.active {
+            display: flex !important;
+        }
+
+        /* Scene 1: Counter (Main) */
+        #scene-counter {
+            background-image: url('counter.png');
+            background-size: 90% 90%; /* Smaller to show theme */
+            background-position: center bottom; /* Align to bottom */
+            background-repeat: no-repeat;
+            justify-content: flex-end; /* Align items to bottom */
+            padding-bottom: 20px;
+        }
+
+        #scene-counter h2 {
+            display: none; /* Hide header on counter scene */
+        }
+
+        /* Customers */
+        #customer-display-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            width: 100%;
+            height: 60%; /* Taller area */
+            background: transparent; 
+            border-bottom: none;
+            margin-bottom: 0;
+            position: absolute;
+            bottom: 20.2%; /* Raised a bit more */
+            left: 0;
+            z-index: 5;
+        }
+
+        .customer-card {
+            background: transparent; /* Removed white box */
+            /* border: 4px solid var(--primary-btn); */ /* Removed border */
+            border-radius: 25px;
+            padding: 20px;
+            margin: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 300px; /* Increased size */
+            position: relative;
+            transition: transform 0.2s;
+            /* box-shadow: 0 10px 20px rgba(0,0,0,0.4); */ /* Removed shadow */
+        }
+
+        .customer-img-container {
+            width: 250px; /* Increased size */
+            height: 350px; /* Taller for full body */
+            /* overflow: hidden; */ /* Removed cropping */
+            /* border-radius: 50%; */ /* Removed circle crop */
+            margin-bottom: 15px;
+            /* border: 5px solid #eee; */ /* Removed border */
+            display: flex;
+            align-items: flex-end; /* Align image to bottom */
+            justify-content: center;
+        }
+        
+        .customer-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Show full image */
+        }
+
+        .customer-order-bubble {
+            background: #fff;
+            border: 3px solid #ccc;
+            border-radius: 20px;
+            padding: 15px;
+            position: absolute;
+            top: -80px; /* Adjusted for larger size */
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+            font-size: 1.5rem; /* Even Larger */
+            font-weight: bold;
+        }
+        
+        .customer-order-bubble img {
+            height: 40px; /* Reduced from 60px */
+            vertical-align: middle;
+        }
+
+        /* Serving Counter on Main Scene */
+        #serving-counter-main {
+            background: rgba(255, 255, 255, 0.8);
+            border: 4px solid #5d4037;
+            position: relative;
+            z-index: 10;
+        }
+
+        .drink-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drink-item img {
+            height: 50px; /* Limit drink image height */
+            width: auto;
+        }
+
+        /* Hide text in serving counter main if empty to look cleaner */
+        #serving-counter-main:empty::before {
+            content: "음료 서빙 대기";
+            color: #888;
+        }
+
+        .patience-bar-container {
+            width: 100%;
+            height: 5px;
+            background-color: #eee;
+            margin-top: 5px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .patience-bar {
+            height: 100%;
+            background-color: #4caf50;
+            width: 100%;
+            transition: width 0.2s linear, background-color 0.2s;
+        }
+
+        /* Visual Effects */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+
+        @keyframes pop-out {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+            50% { opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+        
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-150px) scale(2) rotate(20deg); opacity: 0; }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .shake-effect {
+            animation: shake 0.5s;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 9998;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Modal (Math Problem) */
+        #math-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .math-problem {
+            font-size: 2rem;
+            margin: 20px 0;
+            font-weight: bold;
+            font-family: 'Times New Roman', serif;
+            color: #d84315;
+        }
+
+        .math-input {
+            font-size: 1.5rem;
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .guide-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .result-message {
+            margin-top: 10px;
+            font-weight: bold;
+            height: 24px;
+        }
+
+        .correct { color: green; }
+        .wrong { color: red; }
+
+        /* Game Over Modal */
+        #game-over-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: white;
+        }
+
+        .game-over-content {
+            background-color: #3e2723;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 4px solid #d84315;
+        }
+
+        /* Drag Ghost */
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+
+        /* Inventory & Recipe List - Standardized Boxes */
+        .item-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Increased to 130px */
+            gap: 10px; /* Increased gap */
+            width: 100%; 
+            padding: 10px; 
+            box-sizing: border-box; 
+        }
+
+        .item-card {
+            background: white;
+            padding: 10px; /* Increased padding */
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 140px; /* Increased height */
+            box-sizing: border-box;
+        }
+        
+        .item-card:active {
+            transform: scale(0.95);
+        }
+        
+        .item-icon {
+            font-size: 2rem;
+            height: 50px;
+            width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        
+        .item-icon img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Shop Styles */
+        .shop-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 8px;
+            background: white;
+            text-align: center;
+            min-width: 120px;
+        }
+        .shop-item img { width: 40px; height: 40px; margin-bottom: 5px; }
+        .shop-category { font-weight: bold; margin: 10px 0 5px; border-bottom: 1px solid #eee; width: 100%; }
+
+        /* Theme Styles */
+        body.theme-cat {
+            background-color: #fff0f5;
+            background-image: radial-gradient(#f8bbd0 15%, transparent 16%), radial-gradient(#f8bbd0 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+        body.theme-cat .panel { border-color: #ec407a; background-color: #fce4ec; }
+        body.theme-cat .btn { background-color: #ec407a; }
+        
+        body.theme-space {
+            background-color: #1a237e;
+            color: #e8eaf6;
+            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+            radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px; 
+            background-position: 0 0, 40px 60px, 130px 270px;
+        }
+        body.theme-space .panel { background-color: #283593; border-color: #7986cb; color: #fff; }
+        body.theme-space .btn { background-color: #3949ab; }
+        body.theme-space .slot { background-color: #303f9f; border-color: #7986cb; }
+
+        #current-recipe-info img {
+            height: 40px;
+            vertical-align: middle;
+        }
+
+        /* Kitchen Layout Adjustments */
+        #scene-kitchen {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding-bottom: 80px; /* Space for nav buttons */
+            align-items: center; /* Center content */
+        }
+
+        #scene-kitchen #recipe-area {
+            flex: 1; 
+            min-height: 200px;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            width: 95%; 
+            max-width: 800px;
+        }
+
+        #scene-kitchen #recipe-area .item-list {
+            overflow-y: auto;
+            flex: 1;
+            height: 100%; 
+        }
+
+        #scene-kitchen #kitchen-area {
+            flex: 0 0 auto; 
+            width: 95%;
+            max-width: 800px;
+        }
+
+        #scene-kitchen #inventory-area {
+            flex: 1;
+            min-height: 150px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 95%;
+            max-width: 800px;
+        }
+
+        #scene-kitchen #inventory-area .item-list {
+            overflow-y: auto;
+            flex: 1;
+            height: 100%;
+        }
+
+        /* Kitchen Customer Status Bar */
+        #kitchen-status-bar {
+            width: 95%;
+            max-width: 800px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            border: 2px solid #8d6e63;
+            min-height: 60px;
+            align-items: center;
+        }
+
+        .mini-customer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 50px;
+            position: relative;
+        }
+
+        .mini-customer img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+
+        .mini-patience {
+            width: 100%;
+            height: 4px;
+            background: #eee;
+            margin-top: 2px;
+            border-radius: 2px;
+        }
+        
+        .mini-patience-bar {
+            height: 100%;
+            background: #4caf50;
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="stat-box">⭐ 평판: <span id="rep-display">0</span></div>
+        <div class="stat-box">💰 골드: <span id="gold-display">0</span></div>
+        <div style="font-size: 0.9rem;">( ) 괄호 먼저 ➔ ×÷ 왼쪽부터 ➔ +- 왼쪽부터</div>
+    </header>
+
+    <div id="combo-container">
+        <span id="combo-count"></span>
+        <div id="fever-text">🔥 FEVER TIME! 🔥</div>
+    </div>
+
+    <div id="mission-bar" style="display: block; background-color: #fff3e0; border-bottom: 2px solid #ff9800; color: #e65100;">
+        🚩 <span id="level-display">Stage 1</span>: <span id="mission-desc">목표 설정 중...</span> 
+        (<span id="mission-progress">0</span>/<span id="mission-goal">0</span>) 
+        ⏳ <span id="mission-timer">0</span>초
+    </div>
+
+    <div id="scene-container">
+        <!-- Scene 1: Counter (Main) -->
+        <div id="scene-counter" class="scene active">
+            <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">☕ 카페 카운터</h2>
+            
+            <div id="customer-display-area">
+                <div id="customer-list" style="display: flex; width: 100%; justify-content: space-around;">
+                    <p>손님을 기다리는 중...</p>
+                </div>
+            </div>
+
+            <div style="margin-top: auto; width: 100%; text-align: center;">
+                <h3 style="margin: 5px 0;">완성된 음료 (서빙하려면 드래그!)</h3>
+                <div class="serving-counter-area" id="serving-counter-main">
+                    <div style="color: #666;">주방에서 음료를 만들어오세요!</div>
+                </div>
+            </div>
+
+            <div class="nav-btn-container" style="position: relative; z-index: 100;">
+                <button class="btn nav-btn" id="btn-to-kitchen" onclick="switchScene('kitchen')">🍳 주방으로 이동</button>
+                <button class="btn nav-btn" id="btn-to-shop" onclick="switchScene('shop')" style="background-color: #ff9800;">🛒 상점 열기</button>
+            </div>
+        </div>
+
+        <!-- Scene 2: Kitchen (Bar) -->
+        <div id="scene-kitchen" class="scene">
+            <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">🍳 주방 (음료 제조)</h2>
+            
+            <!-- Recipe Book -->
+            <div id="recipe-area" class="panel">
+                <h2>📖 레시피 & 메뉴 선택</h2>
+                <p style="font-size: 0.8rem; text-align: center;">만들고 싶은 메뉴를 클릭해서 제조대에 세팅하세요.</p>
+                <div class="item-list" id="upgrade-list">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Crafting Table -->
+            <div id="kitchen-area" class="panel">
+                <h2>☕ 제조대</h2>
+                <div id="crafting-area">
+                    <div id="current-recipe-info" style="margin-bottom: 10px; font-weight: bold; color: #555;">
+                        만들 메뉴를 레시피북에서 선택하세요!
+                    </div>
+                    
+                    <!-- Drop Zones for Ingredients -->
+                    <div id="crafting-slots">
+                        <!-- Slots generated by JS -->
+                    </div>
+
+                    <button id="craft-btn" class="btn" onclick="startCraftingMath()" disabled style="font-size: 1.2rem; padding: 10px 30px;">
+                        만들기 (문제 풀기)
+                    </button>
+                </div>
+
+                <div style="margin-top: 20px; border-top: 2px dashed #ccc; width: 100%; padding-top: 10px;">
+                    <h3 style="text-align: center; margin: 0 0 10px 0;">완성된 음료 (Serving Counter)</h3>
+                    <div class="serving-counter-area" id="serving-counter-kitchen">
+                        <div style="color: #999;">음료가 완성되면 여기에 나타납니다.<br>손님에게 드래그해서 서빙하세요!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Status (Mini) - MOVED HERE -->
+            <div id="kitchen-status-bar">
+                <!-- JS Generated -->
+            </div>
+
+            <!-- Inventory -->
+            <div id="inventory-area" class="panel">
+                <h2>📦 재료 창고</h2>
+                <div class="item-list" id="inventory-list">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="nav-btn-container">
+                <button class="btn nav-btn" onclick="switchScene('counter')">🔙 카운터로 복귀</button>
+            </div>
+        </div>
+
+        <!-- Scene 3: Shop -->
+        <div id="scene-shop" class="scene">
+            <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">🛒 상점</h2>
+            <p>상점 이용 중에는 손님의 인내심이 줄어들지 않습니다.</p>
+            
+            <div id="shop-area" class="panel" style="overflow-x: auto; height: 60vh;">
+                <div class="item-list" id="shop-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <div class="nav-btn-container">
+                <button class="btn nav-btn" onclick="switchScene('counter')">🔙 나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Math Modal -->
+    <div id="math-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">계산 문제</h2>
+            <div class="guide-text">
+                💡 <b>계산 순서 힌트:</b><br>
+                1. <b>( )</b> 괄호 안을 제일 먼저!<br>
+                2. <b>×, ÷</b> 곱셈, 나눗셈을 그 다음 (왼쪽부터)<br>
+                3. <b>+, -</b> 덧셈, 뺄셈을 마지막 (왼쪽부터)
+            </div>
+            <div id="problem-display" class="math-problem">10 + 2 * 3</div>
+            <input type="number" id="answer-input" class="math-input" placeholder="정답 입력" onkeydown="if(event.key === 'Enter') checkAnswer()">
+            <br>
+            <button class="btn" onclick="checkAnswer()">확인</button>
+            <div id="result-msg" class="result-message"></div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal">
+        <div class="game-over-content">
+            <h1 style="font-size: 3rem; margin-bottom: 20px;">GAME OVER</h1>
+            <p style="font-size: 1.5rem;">미션 실패! 카페가 파산했습니다.</p>
+            <p>최종 평판: <span id="final-rep">0</span></p>
+            <button class="btn" onclick="restartGame()" style="font-size: 1.5rem; padding: 15px 30px; margin-top: 20px;">다시 시작하기</button>
+        </div>
+    </div>
+
+    <!-- Cheat Controls -->
+    <div style="position: fixed; bottom: 10px; right: 10px; opacity: 0.8; z-index: 9000; display: flex; gap: 5px;">
+        <button class="btn" onclick="cheatAddGold()" style="background: #ffd700; color: #000; border: 1px solid #daa520;">💰 +2만G</button>
+        <button class="btn" onclick="cheatAddIngredients()" style="background: #81c784; color: #000; border: 1px solid #388e3c;">📦 재료 +10</button>
+    </div>
+
+    <audio id="bgm-player" loop></audio>
+
+    <script>
+        // --- Game Data ---
+        // Customer Images
+        const customerImages = [
+            'customer.png',
+            'customer (1).png', 'customer (2).png', 'customer (3).png',
+            'customer (4).png', 'customer (5).png', 'customer (6).png',
+            'customer (7).png', 'customer (8).png', 'customer (9).png',
+            'customer (10).png', 'customer (11).png', 'customer (12).png',
+            'customer (13).png'
+        ];
+
+
+        const ingredients = [
+            // Liquids
+            { id: 'water', name: '물', icon: '💧' },
+            { id: 'milk', name: '우유', icon: '<img src="milk.png" alt="우유">' },
+            { id: 'sparkling', name: '탄산수', icon: '🫧' },
+            
+            // Coffee
+            { id: 'bean', name: '원두', icon: '<img src="coffeebeans.png" alt="원두">' },
+            
+            // Powders
+            { id: 'matcha', name: '말차 가루', icon: '🍵' },
+            { id: 'yogurt_p', name: '요거트 파우더', icon: '🥡' },
+            { id: 'cinnamon', name: '시나몬 가루', icon: '🍂' },
+            { id: 'choco_p', name: '초코 가루', icon: '🍫' },
+            
+            // Syrups/Sauces
+            { id: 'vanilla', name: '바닐라 시럽', icon: '🧴' },
+            { id: 'choco_s', name: '초코 소스', icon: '🤎' },
+            { id: 'caramel', name: '카라멜 드리즐', icon: '🍯' },
+            { id: 'sugar', name: '설탕 시럽', icon: '<img src="syrup.png" alt="설탕 시럽">' },
+            
+            // Tea
+            { id: 'black_tea', name: '홍차 잎', icon: '🍂' },
+            { id: 'chamomile', name: '캐모마일 티백', icon: '🌼' },
+            { id: 'earlgrey', name: '얼그레이 티백', icon: '🌿' },
+            
+            // Fruits/Base
+            { id: 'strawberry', name: '딸기 청', icon: '🍓' },
+            { id: 'sweet_potato', name: '고구마 페이스트', icon: '🍠' },
+            { id: 'peach', name: '복숭아 베이스', icon: '🍑' },
+            { id: 'lemon', name: '레몬 청', icon: '🍋' },
+            { id: 'grapefruit', name: '자몽 청', icon: '🍊' },
+            { id: 'grape', name: '청포도 베이스', icon: '🍇' },
+            { id: 'mango', name: '망고 베이스', icon: '🥭' },
+            
+            // Toppings/Others
+            { id: 'whip', name: '휘핑크림', icon: '☁️' },
+            { id: 'cream', name: '수제 크림', icon: '🧁' },
+            { id: 'ice_cream', name: '바닐라 아이스크림', icon: '🍨' },
+            { id: 'javachip', name: '자바칩', icon: '🍪' },
+            { id: 'ice', name: '얼음', icon: '🧊' }
+        ];
+
+        const recipes = [
+            // Coffee
+            { id: 'espresso', name: '에스프레소', icon: '<img src="espresso.png" alt="에스프레소">', req: { bean: 2 }, price: 30, difficulty: 'medium', unlocked: true, unlockCost: 0 },
+            { id: 'americano', name: '아메리카노', icon: '<img src="iceamericano.png" alt="아메리카노">', req: { bean: 2, water: 2 }, price: 40, difficulty: 'medium', unlocked: true, unlockCost: 0 },
+            { id: 'latte', name: '카페라떼', icon: '<img src="cafelatte.png" alt="카페라떼">', req: { bean: 2, milk: 2 }, price: 50, difficulty: 'hard', unlocked: true, unlockCost: 0 },
+            { id: 'cappuccino', name: '카푸치노', icon: '<img src="Cappuccino.png" alt="카푸치노">', req: { bean: 2, milk: 2, cinnamon: 1 }, price: 55, difficulty: 'hard', unlocked: false, unlockCost: 150 },
+            { id: 'vanilla_latte', name: '바닐라 라떼', icon: '<img src="vanilla_latte.png" alt="바닐라 라떼">', req: { bean: 2, milk: 2, vanilla: 1 }, price: 60, difficulty: 'hard', unlocked: false, unlockCost: 200 },
+            { id: 'mocha', name: '카페모카', icon: '<img src="caffe_ Mocha.png" alt="카페모카">', req: { bean: 2, milk: 2, choco_s: 1, whip: 1 }, price: 65, difficulty: 'very-hard', unlocked: false, unlockCost: 250 },
+            { id: 'caramel_macchiato', name: '카라멜 마키아토', icon: '<img src="Caramel_Macchiato.png" alt="카라멜 마키아토">', req: { bean: 2, milk: 2, vanilla: 1, caramel: 1 }, price: 70, difficulty: 'very-hard', unlocked: false, unlockCost: 300 },
+            { id: 'einspanner', name: '아인슈페너', icon: '<img src="Einspanner.png" alt="아인슈페너">', req: { bean: 2, water: 1, cream: 1 }, price: 65, difficulty: 'hard', unlocked: false, unlockCost: 350 },
+            { id: 'coldbrew', name: '콜드브루', icon: '<img src="coldbrew.png" alt="콜드브루">', req: { bean: 3, water: 2 }, price: 60, difficulty: 'hard', unlocked: false, unlockCost: 400 },
+            { id: 'affogato', name: '아포가토', icon: '🍨', req: { bean: 2, ice_cream: 1 }, price: 70, difficulty: 'medium', unlocked: false, unlockCost: 450 },
+
+            // Non-Coffee Latte & Tea
+            { id: 'choco_latte', name: '초코 라떼', icon: '<img src="chocolatte.png" alt="초코 라떼">', req: { choco_p: 2, milk: 2, whip: 1 }, price: 55, difficulty: 'medium', unlocked: false, unlockCost: 200 },
+            { id: 'matcha_latte', name: '녹차 라떼', icon: '<img src="green_tea_latte.png" alt="녹차 라떼">', req: { matcha: 2, milk: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 250 },
+            { id: 'sweet_potato_latte', name: '고구마 라떼', icon: '<img src="sweet_potato_latte.png" alt="고구마 라떼">', req: { sweet_potato: 2, milk: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 300 },
+            { id: 'milktea', name: '밀크티', icon: '<img src="milk_tea.png" alt="밀크티">', req: { black_tea: 2, milk: 2, sugar: 1 }, price: 60, difficulty: 'hard', unlocked: false, unlockCost: 300 },
+            { id: 'strawberry_latte', name: '딸기 라떼', icon: '<img src="strawberry_latte.png" alt="딸기 라떼">', req: { strawberry: 2, milk: 2 }, price: 65, difficulty: 'medium', unlocked: false, unlockCost: 350 },
+            { id: 'chamomile', name: '캐모마일 티', icon: '<img src="chamomile_tea.png" alt="캐모마일 티">', req: { chamomile: 1, water: 2 }, price: 45, difficulty: 'easy', unlocked: false, unlockCost: 150 },
+            { id: 'earlgrey', name: '얼그레이 티', icon: '<img src="ear_ grey_tea.png" alt="얼그레이 티">', req: { earlgrey: 1, water: 2 }, price: 45, difficulty: 'easy', unlocked: false, unlockCost: 150 },
+            { id: 'peach_iced_tea', name: '복숭아 아이스티', icon: '<img src="peach_ice_tea.png" alt="복숭아 아이스티">', req: { peach: 2, water: 2, ice: 2 }, price: 50, difficulty: 'medium', unlocked: false, unlockCost: 200 },
+
+            // Ade & Smoothie
+            { id: 'lemonade', name: '레몬 에이드', icon: '<img src="Lemonade.png" alt="레몬 에이드">', req: { lemon: 2, sparkling: 2, ice: 2 }, price: 55, difficulty: 'medium', unlocked: false, unlockCost: 250 },
+            { id: 'grapefruit_ade', name: '자몽 에이드', icon: '<img src="Grapefruit Ade.png" alt="자몽 에이드">', req: { grapefruit: 2, sparkling: 2, ice: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 300 },
+            { id: 'grape_ade', name: '청포도 에이드', icon: '<img src="Green grape ade.png" alt="청포도 에이드">', req: { grape: 2, sparkling: 2, ice: 2 }, price: 60, difficulty: 'medium', unlocked: false, unlockCost: 300 },
+            { id: 'yogurt_smoothie', name: '요거트 스무디', icon: '<img src="Yogurt Smoothie.png" alt="요거트 스무디">', req: { yogurt_p: 2, milk: 1, ice: 3 }, price: 65, difficulty: 'hard', unlocked: false, unlockCost: 400 },
+            { id: 'mango_smoothie', name: '망고 스무디', icon: '<img src="Mango Smoothie.png" alt="망고 스무디">', req: { mango: 2, ice: 3, milk: 1 }, price: 70, difficulty: 'hard', unlocked: false, unlockCost: 450 },
+            { id: 'javachip_frappe', name: '자바칩 프라페', icon: '<img src="Java Chip Frappe.png" alt="자바칩 프라페">', req: { choco_s: 1, javachip: 2, milk: 1, ice: 3, whip: 1 }, price: 80, difficulty: 'very-hard', unlocked: false, unlockCost: 500 }
+        ];
+
+        const customerNames = [
+            "민수", "지민", "서연", "준호", "영희", "철수", 
+            "John", "Jane", "Steve", "Emma", "David", "Sarah", 
+            "Michael", "Olivia", "Chris", "Jessica"
+        ];
+
+        // --- Game State ---
+        let state = {
+            gold: 0,
+            rep: 0,
+            inventory: {
+                // ... (기존 재료)
+                bean: 5, milk: 5, water: 5, sugar: 3,
+                ice: 5, choco: 2, caramel: 2, vanilla: 2,
+                sparkling: 3, lemon: 2, lime: 2, grapefruit: 2,
+                strawberry: 2, blueberry: 2, mango: 2, peach: 2,
+                matcha: 2, black_tea: 2, mint: 2,
+                whip: 2, cinnamon: 2, herb: 2, java_chip: 2,
+                yogurt: 2, honey: 2, cream: 2
+            },
+            customers: [],
+            combo: 0,
+            fever: false,
+            feverTime: 0,
+            
+            // New Shop & Upgrade State
+            upgrades: {
+                autoWhisk: false, // 자동 거품기 (우유 메뉴 난이도 하락)
+                premiumMachine: false, // 고급 원두 머신 (커피 골드 +20%)
+                adBoard: false, // 광고판 (손님 방문 속도 증가)
+                autoGather: 0, // 재료 알바 (남은 시간 ms)
+                autoServe: 0, // 서빙 알바 (남은 시간 ms)
+            },
+            theme: 'default', // 'default', 'cat', 'space'
+            bgm: 'default', // 'default', 'jazz', 'lofi', 'pop'
+            unlockedItems: [] // 구매한 아이템 ID 목록
+        };
+
+        // Scene Management
+        let currentScene = 'counter'; // 'counter', 'kitchen', 'shop'
+
+        function switchScene(sceneName) {
+            console.log("Switching scene to:", sceneName);
+            currentScene = sceneName;
+            
+            // Safe removal
+            ['scene-counter', 'scene-kitchen', 'scene-shop'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('active');
+            });
+
+            // Add active to target
+            const target = document.getElementById(`scene-${sceneName}`);
+            if (target) {
+                target.classList.add('active');
+                // Force display flex in case of style conflicts
+                target.style.display = 'flex';
+            } else {
+                console.error(`Scene not found: scene-${sceneName}`);
+            }
+            
+            // Hide others explicitly
+            ['scene-counter', 'scene-kitchen', 'scene-shop'].forEach(id => {
+                if (id !== `scene-${sceneName}`) {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                }
+            });
+
+            updateUI(); // Refresh UI for the new scene
+        }
+
+        const shopItems = [
+            // 1. Upgrades
+            { id: 'autoWhisk', name: '자동 거품기', price: 500, type: 'upgrade', desc: '우유 메뉴 문제 난이도 하락', icon: '🥛' },
+            { id: 'premiumMachine', name: '고급 원두 머신', price: 1000, type: 'upgrade', desc: '커피 메뉴 판매 시 골드 +20%', icon: '☕' },
+            { id: 'adBoard', name: '광고판', price: 800, type: 'upgrade', desc: '손님이 더 자주 방문함', icon: '📢' },
+            
+            // 2. Consumables / Staff
+            { id: 'candyBasket', name: '사탕 바구니', price: 300, type: 'consumable', desc: '모든 손님 인내심 50% 회복', icon: '🍬' },
+            { id: 'staffGather', name: '재료 담당 알바', price: 500, type: 'staff', desc: '3분간 재료 부족 시 자동 채움', icon: '👩‍🌾', duration: 180000 },
+            { id: 'staffServe', name: '서빙 담당 알바', price: 800, type: 'staff', desc: '3분간 완성된 음료 자동 서빙', icon: '🏃', duration: 180000 },
+
+            // 3. Themes
+            { id: 'theme_cat', name: '고양이 카페', price: 1000, type: 'theme', desc: '야옹~ 고양이 테마 적용', icon: '🐱', themeId: 'cat' },
+            { id: 'theme_space', name: '우주 정거장', price: 2000, type: 'theme', desc: '무중력 우주 테마 적용', icon: '🚀', themeId: 'space' },
+
+            // 4. BGM (Simulated for now)
+            { id: 'bgm_jazz', name: '재즈 음악', price: 300, type: 'bgm', desc: '부드러운 재즈 선율', icon: '🎷', bgmId: 'jazz' },
+            { id: 'bgm_lofi', name: 'Lo-fi 음악', price: 300, type: 'bgm', desc: '차분한 Lo-fi 비트', icon: '🎧', bgmId: 'lofi' },
+            { id: 'bgm_pop', name: 'Pop 음악', price: 300, type: 'bgm', desc: '신나는 팝 음악', icon: '🎸', bgmId: 'pop' }
+        ];
+
+        // --- Level System ---
+        let levelState = {
+            level: 1,
+            type: 'serve', // 'serve', 'gold', 'perfect'
+            target: 0,
+            current: 0,
+            timeLeft: 0,
+            timerId: null
+        };
+
+        let gameTime = 0;
+        let gameLoopId = null;
+        let isGameOver = false;
+
+        let currentProblem = null;
+        let currentAction = null; 
+        let currentAttempts = 0; 
+        
+        let activeRecipeId = null;
+        let craftingSlots = {}; 
+        let finishedDrink = null;
+
+        // --- Math Engine ---
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function validateStrictMath(expression) {
+            // Tokenize: numbers or operators/parens
+            const tokens = expression.match(/(\d+|[\+\-\*\/()])/g);
+            if (!tokens) return false;
+
+            const outputQueue = [];
+            const operatorStack = [];
+            const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
+
+            for (const token of tokens) {
+                if (!isNaN(token)) {
+                    outputQueue.push(Number(token));
+                } else if (['+', '-', '*', '/'].includes(token)) {
+                    while (
+                        operatorStack.length > 0 &&
+                        operatorStack[operatorStack.length - 1] !== '(' &&
+                        precedence[operatorStack[operatorStack.length - 1]] >= precedence[token]
+                    ) {
+                        outputQueue.push(operatorStack.pop());
+                    }
+                    operatorStack.push(token);
+                } else if (token === '(') {
+                    operatorStack.push(token);
+                } else if (token === ')') {
+                    while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] !== '(') {
+                        outputQueue.push(operatorStack.pop());
+                    }
+                    operatorStack.pop(); 
+                }
+            }
+            while (operatorStack.length > 0) {
+                outputQueue.push(operatorStack.pop());
+            }
+
+            const evalStack = [];
+            for (const token of outputQueue) {
+                if (typeof token === 'number') {
+                    evalStack.push(token);
+                } else {
+                    const b = evalStack.pop();
+                    const a = evalStack.pop();
+                    if (token === '+') evalStack.push(a + b);
+                    else if (token === '-') {
+                        const res = a - b;
+                        if (res < 0) return false; // Prevent negative intermediate results
+                        evalStack.push(res);
+                    }
+                    else if (token === '*') evalStack.push(a * b);
+                    else if (token === '/') {
+                        if (b === 0 || a % b !== 0) return false;
+                        evalStack.push(a / b);
+                    }
+                }
+            }
+            if (evalStack.length !== 1 || evalStack[0] < 0) return false; // Final check
+            return true;
+        }
+
+        function generateProblem(difficulty) {
+            let expression = "";
+            let answer = 0;
+            let displayExp = "";
+
+            while (true) {
+                try {
+                    const ops_pm = ['+', '-'];
+                    const ops_md = ['*', '/'];
+                    const all_ops = ['+', '-', '*', '/'];
+
+                    if (difficulty === 'easy') {
+                        const n1 = getRandomInt(2, 9);
+                        const n2 = getRandomInt(2, 9);
+                        const n3 = getRandomInt(2, 9);
+                        const type = getRandomInt(1, 2);
+                        const op_pm = ops_pm[getRandomInt(0, 1)];
+                        const op_md = ops_md[getRandomInt(0, 1)];
+
+                        if (type === 1) expression = `${n1} ${op_pm} ${n2} ${op_md} ${n3}`;
+                        else expression = `${n1} ${op_md} ${n2} ${op_pm} ${n3}`;
+                    } 
+                    else if (difficulty === 'medium') {
+                        const n1 = getRandomInt(5, 15);
+                        const n2 = getRandomInt(2, 10);
+                        const n3 = getRandomInt(2, 10);
+                        
+                        const op_pm = ops_pm[getRandomInt(0, 1)];
+                        const op_md = ops_md[getRandomInt(0, 1)];
+                        
+                        let op1, op2;
+                        if (Math.random() < 0.5) { op1 = op_pm; op2 = op_md; }
+                        else { op1 = op_md; op2 = op_pm; }
+
+                        const useParen = Math.random() < 0.5;
+
+                        if (useParen) {
+                            if (Math.random() < 0.5) expression = `(${n1} ${op1} ${n2}) ${op2} ${n3}`;
+                            else expression = `${n1} ${op1} (${n2} ${op2} ${n3})`;
+                        } else {
+                            expression = `${n1} ${op1} ${n2} ${op2} ${n3}`;
+                        }
+                    } 
+                    else {
+                        const n1 = getRandomInt(5, 20);
+                        const n2 = getRandomInt(2, 10);
+                        const n3 = getRandomInt(2, 10);
+                        const n4 = getRandomInt(2, 10);
+                        
+                        const op_pm = ops_pm[getRandomInt(0, 1)];
+                        const op_md = ops_md[getRandomInt(0, 1)];
+                        const op_rnd = all_ops[getRandomInt(0, 3)];
+                        
+                        const ops = [op_pm, op_md, op_rnd];
+                        for (let i = ops.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [ops[i], ops[j]] = [ops[j], ops[i]];
+                        }
+                        
+                        const op1 = ops[0];
+                        const op2 = ops[1];
+                        const op3 = ops[2];
+
+                        const type = getRandomInt(1, 3);
+                        if (type === 1) expression = `(${n1} ${op1} ${n2}) ${op2} ${n3} ${op3} ${n4}`;
+                        else if (type === 2) expression = `${n1} ${op1} (${n2} ${op2} ${n3}) ${op3} ${n4}`;
+                        else expression = `${n1} ${op1} ${n2} ${op2} (${n3} ${op3} ${n4})`;
+                    }
+
+                    let result = eval(expression);
+
+                    if (Number.isInteger(result) && result >= 0 && result <= 100) {
+                        if (expression.includes('/') && !validateStrictMath(expression)) continue;
+                        answer = result;
+                        displayExp = expression.replace(/\*/g, '×').replace(/\//g, '÷');
+                        break;
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+            return { expression: displayExp, answer: answer, raw: expression };
+        }
+
+        // --- UI Functions ---
+        function updateUI() {
+            document.getElementById('gold-display').innerText = state.gold;
+            document.getElementById('rep-display').innerText = state.rep;
+            
+            updateComboUI();
+            
+            // Only render relevant parts for performance and structure
+            if (currentScene === 'counter') {
+                renderCustomers();
+                renderServingCounter();
+            } else if (currentScene === 'kitchen') {
+                renderKitchenStatus();
+                renderInventory();
+                renderRecipes();
+                renderCraftingTable();
+            } else if (currentScene === 'shop') {
+                renderShop(); 
+            }
+            
+            renderLevelInfo();
+        }
+
+        function renderShop() {
+            const list = document.getElementById('shop-list');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            shopItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'shop-item';
+                
+                let btnText = "구매";
+                let btnDisabled = state.gold < item.price;
+                let isOwned = false;
+
+                // Check ownership/status
+                if (item.type === 'upgrade') {
+                    if (state.upgrades[item.id]) {
+                        btnText = "보유중";
+                        btnDisabled = true;
+                        isOwned = true;
+                    }
+                } else if (item.type === 'theme') {
+                    if (state.unlockedItems.includes(item.id)) {
+                        if (state.theme === item.themeId) {
+                            btnText = "적용중";
+                            btnDisabled = true;
+                        } else {
+                            btnText = "적용";
+                            btnDisabled = false;
+                        }
+                        isOwned = true;
+                    }
+                } else if (item.type === 'bgm') {
+                    if (state.unlockedItems.includes(item.id)) {
+                        if (state.bgm === item.bgmId) {
+                            btnText = "재생중";
+                            btnDisabled = true;
+                        } else {
+                            btnText = "재생";
+                            btnDisabled = false;
+                        }
+                        isOwned = true;
+                    }
+                } else if (item.type === 'staff') {
+                    if (state.upgrades[item.id] > 0) {
+                        const timeLeft = Math.ceil(state.upgrades[item.id] / 1000);
+                        btnText = `${timeLeft}초 남음`;
+                        btnDisabled = true;
+                    }
+                }
+
+                div.innerHTML = `
+                    <div style="font-size: 2rem;">${item.icon}</div>
+                    <div style="font-weight:bold; margin:5px 0;">${item.name}</div>
+                    <div style="font-size:0.8rem; color:#666; height:30px; margin-bottom:5px;">${item.desc}</div>
+                    <div style="font-weight:bold; color:#d84315;">${isOwned && item.type !== 'consumable' && item.type !== 'staff' ? '구매완료' : item.price + 'G'}</div>
+                    <button class="btn" onclick="buyShopItem('${item.id}')" ${btnDisabled ? 'disabled' : ''} style="width:100%; margin-top:5px;">
+                        ${btnText}
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function buyShopItem(itemId) {
+            const item = shopItems.find(i => i.id === itemId);
+            
+            // Logic for applying owned items (Theme/BGM)
+            if (item.type === 'theme' && state.unlockedItems.includes(itemId)) {
+                applyTheme(item.themeId);
+                return;
+            }
+            if (item.type === 'bgm' && state.unlockedItems.includes(itemId)) {
+                applyBgm(item.bgmId);
+                return;
+            }
+
+            if (state.gold >= item.price) {
+                state.gold -= item.price;
+                
+                if (item.type === 'upgrade') {
+                    state.upgrades[item.id] = true;
+                    alert(`${item.name} 구매 완료! 효과가 적용됩니다.`);
+                } else if (item.type === 'consumable') {
+                    if (item.id === 'candyBasket') {
+                        state.customers.forEach(c => {
+                            c.currentPatience = Math.min(c.maxPatience, c.currentPatience + (c.maxPatience * 0.5));
+                        });
+                        alert("모든 손님의 인내심이 회복되었습니다! 🍬");
+                    }
+                } else if (item.type === 'staff') {
+                    state.upgrades[item.id] = item.duration;
+                    alert(`${item.name} 고용 완료! 3분간 열심히 일합니다.`);
+                } else if (item.type === 'theme') {
+                    state.unlockedItems.push(item.id);
+                    applyTheme(item.themeId);
+                    alert(`${item.name} 테마를 획득했습니다!`);
+                } else if (item.type === 'bgm') {
+                    state.unlockedItems.push(item.id);
+                    applyBgm(item.bgmId);
+                    alert(`${item.name}을 획득했습니다!`);
+                }
+                
+                updateUI();
+            } else {
+                alert("골드가 부족합니다!");
+            }
+        }
+
+        function applyTheme(themeId) {
+            state.theme = themeId;
+            document.body.classList.remove('theme-cat', 'theme-space');
+            if (themeId !== 'default') {
+                document.body.classList.add(`theme-${themeId}`);
+            }
+            updateUI();
+        }
+
+        function applyBgm(bgmId) {
+            state.bgm = bgmId;
+            const player = document.getElementById('bgm-player');
+            let src = '';
+
+            if (bgmId === 'jazz') src = 'jazz_music.mp3';
+            else if (bgmId === 'lofi') src = 'lo-fi music.mp3';
+            else if (bgmId === 'pop') src = 'pop_music.mp3';
+
+            if (src) {
+                // Only change source if it's different to prevent restarting
+                // But if it is not playing, try to play
+                const currentSrc = player.getAttribute('src');
+                if (currentSrc !== src) {
+                    player.src = src;
+                    player.play().catch(e => console.log("Audio play failed (interaction required):", e));
+                } else if (player.paused) {
+                    player.play().catch(e => console.log("Audio play failed:", e));
+                }
+            } else {
+                player.pause();
+                player.src = "";
+            }
+
+            // Visual feedback
+            const header = document.querySelector('header');
+            if (bgmId === 'jazz') header.style.borderBottom = '3px solid #d4af37';
+            else if (bgmId === 'lofi') header.style.borderBottom = '3px solid #9c27b0';
+            else if (bgmId === 'pop') header.style.borderBottom = '3px solid #ff4081';
+            else header.style.borderBottom = 'none';
+            
+            updateUI();
+        }
+
+        function updateComboUI() {
+            const comboEl = document.getElementById('combo-count');
+            const feverEl = document.getElementById('fever-text');
+            
+            if (state.combo > 1) {
+                comboEl.innerText = `${state.combo} COMBO!`;
+                comboEl.style.display = 'block';
+            } else {
+                comboEl.style.display = 'none';
+            }
+
+            if (state.fever) {
+                feverEl.style.display = 'block';
+                document.body.classList.add('fever-mode');
+            } else {
+                feverEl.style.display = 'none';
+                document.body.classList.remove('fever-mode');
+            }
+        }
+
+        function renderLevelInfo() {
+            const bar = document.getElementById('mission-bar');
+            document.getElementById('level-display').innerText = `Stage ${levelState.level}`;
+            
+            let desc = "";
+            if (levelState.type === 'serve') desc = `손님 ${levelState.target}명 서빙`;
+            else if (levelState.type === 'gold') desc = `골드 ${levelState.target}G 벌기`;
+            else if (levelState.type === 'perfect') desc = `완벽한 음료(👑) ${levelState.target}잔 서빙`;
+            
+            document.getElementById('mission-desc').innerText = desc;
+            document.getElementById('mission-progress').innerText = levelState.current;
+            document.getElementById('mission-goal').innerText = levelState.target;
+            document.getElementById('mission-timer').innerText = levelState.timeLeft;
+            
+            if (levelState.timeLeft <= 10) {
+                bar.style.backgroundColor = '#ffcdd2';
+                bar.style.color = 'red';
+                bar.style.borderBottomColor = 'red';
+            } else {
+                bar.style.backgroundColor = '#fff3e0';
+                bar.style.color = '#e65100';
+                bar.style.borderBottomColor = '#ff9800';
+            }
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('inventory-list');
+            if (!list) return;
+            list.innerHTML = '';
+            ingredients.forEach(item => {
+                const count = state.inventory[item.id] || 0;
+                const div = document.createElement('div');
+                div.className = 'item-card draggable-item';
+                div.draggable = true;
+                div.dataset.type = 'ingredient';
+                div.dataset.itemId = item.id;
+                div.ondragstart = (e) => dragStartIngredient(e, item.id);
+                
+                div.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div><b>${item.name}</b></div>
+                    <div>보유: ${count}</div>
+                    <button class="btn" onclick="startGathering('${item.id}')" style="font-size:0.7rem; padding:3px;">구하기</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renderRecipes() {
+            const list = document.getElementById('upgrade-list');
+            if (!list) return;
+            list.innerHTML = '';
+            recipes.forEach(recipe => {
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                
+                if (recipe.unlocked) {
+                    div.style.border = activeRecipeId === recipe.id ? '2px solid blue' : '1px solid #ddd';
+                    div.style.backgroundColor = activeRecipeId === recipe.id ? '#e3f2fd' : 'white';
+                    div.onclick = () => selectRecipe(recipe.id);
+                    div.innerHTML = `
+                        <div class="item-icon" style="font-size:1.5rem;">${recipe.icon}</div>
+                        <div><b>${recipe.name}</b></div>
+                        <div style="font-size:0.8rem;">선택하기</div>
+                    `;
+                } else {
+                    div.style.backgroundColor = '#eee';
+                    div.innerHTML = `
+                        <div class="item-icon" style="font-size:1.5rem; filter:grayscale(100%);">${recipe.icon}</div>
+                        <div><b>${recipe.name}</b></div>
+                        <div>비용: ${recipe.unlockCost}G</div>
+                        <button class="btn" onclick="unlockRecipe('${recipe.id}')" ${state.gold < recipe.unlockCost ? 'disabled' : ''}>해금</button>
+                    `;
+                }
+                list.appendChild(div);
+            });
+        }
+
+        function renderCraftingTable() {
+            const container = document.getElementById('crafting-slots');
+            const info = document.getElementById('current-recipe-info');
+            const btn = document.getElementById('craft-btn');
+            
+            if (!container) return;
+
+            if (!activeRecipeId) {
+                container.innerHTML = '<div style="color:#999; padding:20px;">메뉴를 먼저 선택해주세요.</div>';
+                info.innerText = "만들 메뉴를 레시피북에서 선택하세요!";
+                btn.disabled = true;
+                return;
+            }
+
+            const recipe = recipes.find(r => r.id === activeRecipeId);
+            info.innerHTML = `현재 제작 중: <b>${recipe.name}</b> ${recipe.icon}`;
+            
+            container.innerHTML = '';
+            let allFilled = true;
+
+            for (const [ingId, reqQty] of Object.entries(recipe.req)) {
+                const currentQty = craftingSlots[ingId] || 0;
+                const ingInfo = ingredients.find(i => i.id === ingId);
+                
+                const slotDiv = document.createElement('div');
+                slotDiv.className = `slot ${currentQty >= reqQty ? 'active' : ''}`;
+                slotDiv.dataset.targetType = 'slot';
+                slotDiv.dataset.ingId = ingId;
+                slotDiv.ondragover = (e) => allowDrop(e);
+                slotDiv.ondrop = (e) => dropIngredient(e, ingId);
+                
+                let content = '';
+                if (currentQty > 0) {
+                    content = `<div class="item-icon" style="font-size:1.5rem;">${ingInfo.icon}</div>`;
+                } else {
+                    content = `<div class="item-icon" style="font-size:1.5rem; opacity:0.3;">${ingInfo.icon}</div>`;
+                }
+                
+                slotDiv.innerHTML = `
+                    ${content}
+                    <div class="slot-label">${ingInfo.name} ${currentQty}/${reqQty}</div>
+                `;
+                container.appendChild(slotDiv);
+
+                if (currentQty < reqQty) allFilled = false;
+            }
+
+            btn.disabled = !allFilled || finishedDrink !== null; 
+            if (finishedDrink !== null) {
+                btn.innerText = "음료 수령 필요";
+            } else {
+                btn.innerText = "만들기 (문제 풀기)";
+            }
+        }
+
+        function renderServingCounter() {
+            // Render in both places if they exist, but primarily in Counter scene
+            const counters = document.querySelectorAll('.serving-counter-area');
+            
+            counters.forEach(counter => {
+                counter.innerHTML = '';
+                if (finishedDrink) {
+                    const drinkDiv = document.createElement('div');
+                    drinkDiv.className = 'drink-item';
+                    drinkDiv.draggable = true;
+                    drinkDiv.dataset.type = 'drink';
+                    drinkDiv.ondragstart = (e) => dragStartDrink(e);
+                    
+                    // Allow dragging on mobile
+                    drinkDiv.addEventListener('touchstart', (e) => {
+                        // handled by global listener
+                    });
+                    
+                    let qualityIcon = '';
+                    let recipeIcon = '';
+                    
+                    if (finishedDrink.quality === 'F') {
+                        recipeIcon = '🗑️';
+                        qualityIcon = '💩';
+                    } else {
+                        const recipe = recipes.find(r => r.id === finishedDrink.recipeId);
+                        recipeIcon = recipe.icon;
+                        if (finishedDrink.quality === 'S') qualityIcon = '👑'; 
+                        else if (finishedDrink.quality === 'A') qualityIcon = '⭐'; 
+                        else if (finishedDrink.quality === 'B') qualityIcon = '🙂'; 
+                    }
+                    
+                    drinkDiv.innerHTML = `
+                        <div style="transform: scale(1.6); transform-origin: center;">${recipeIcon}</div>
+                        <div class="drink-quality">${qualityIcon}</div>
+                    `;
+                    counter.appendChild(drinkDiv);
+                } else {
+                     if (currentScene === 'counter') {
+                        counter.innerHTML = '<div style="color: #666;">주방에서 음료를 만들어오세요!</div>';
+                     } else {
+                        counter.innerHTML = '<div style="color: #999;">음료가 완성되면 여기에 나타납니다.</div>';
+                     }
+                }
+            });
+        }
+
+        function renderCustomers() {
+            const list = document.getElementById('customer-list');
+            if (!list) return;
+            list.innerHTML = '';
+            if (state.customers.length === 0) {
+                list.innerHTML = '<p>손님을 기다리는 중...</p>';
+                return;
+            }
+
+            state.customers.forEach((customer, index) => {
+                const recipe = recipes.find(r => r.id === customer.orderId);
+                const patiencePct = (customer.currentPatience / customer.maxPatience) * 100;
+                let barColor = '#4caf50';
+                if (patiencePct < 30) barColor = '#f44336';
+                else if (patiencePct < 60) barColor = '#ff9800';
+
+                const div = document.createElement('div');
+                div.className = 'customer-card';
+                div.dataset.targetType = 'customer';
+                div.dataset.index = index;
+                div.ondragover = (e) => allowDrop(e);
+                div.ondrop = (e) => dropDrink(e, index);
+                div.ondragenter = (e) => e.currentTarget.classList.add('drag-over');
+                div.ondragleave = (e) => e.currentTarget.classList.remove('drag-over');
+
+                // Use assigned image or random if not yet assigned (handled in spawn)
+                let customerImg = customer.img || 'customer.png';
+                // Simple space replacement for local files
+                customerImg = customerImg.replace(/ /g, '%20');
+
+                div.innerHTML = `
+                    <div class="customer-order-bubble">
+                        <img src="${recipe.icon.match(/src="([^"]*)"/)?.[1] || ''}" alt="order">
+                        ${recipe.name}
+                    </div>
+                    <div class="customer-img-container">
+                        <img src="${customerImg}" alt="Customer">
+                    </div>
+                    <div style="font-weight:bold; font-size: 1.2rem; margin-bottom: 5px; background: rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 5px;">${customer.name}</div>
+                    <div class="patience-bar-container">
+                        <div class="patience-bar" style="width:${patiencePct}%; background-color:${barColor};"></div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renderKitchenStatus() {
+            const bar = document.getElementById('kitchen-status-bar');
+            if (!bar) return;
+            bar.innerHTML = '';
+            
+            if (state.customers.length === 0) {
+                bar.innerHTML = '<div style="color:#666; font-size:0.8rem;">대기 중인 손님이 없습니다.</div>';
+                return;
+            }
+
+            state.customers.forEach(customer => {
+                const patiencePct = (customer.currentPatience / customer.maxPatience) * 100;
+                let barColor = '#4caf50';
+                if (patiencePct < 30) barColor = '#f44336';
+                else if (patiencePct < 60) barColor = '#ff9800';
+                
+                let customerImg = customer.img || 'customer.png';
+                customerImg = customerImg.replace(/ /g, '%20');
+                
+                const recipe = recipes.find(r => r.id === customer.orderId);
+
+                const div = document.createElement('div');
+                div.className = 'mini-customer';
+                div.innerHTML = `
+                    <img src="${customerImg}" alt="C">
+                    <div style="font-size:0.7rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">${recipe.name}</div>
+                    <div class="mini-patience">
+                        <div class="mini-patience-bar" style="width:${patiencePct}%; background-color:${barColor};"></div>
+                    </div>
+                `;
+                bar.appendChild(div);
+            });
+        }
+
+        // --- Visual Effects Helper ---
+        function createVisualEffect(x, y, type) {
+            const count = type === 'craft' ? 40 : 20; // More particles for craft
+            const colors = type === 'ingredient' ? ['#fff', '#a1887f', '#d7ccc8'] : 
+                           type === 'serve' ? ['#ffeb3b', '#ff9800', '#f44336', '#e91e63'] : 
+                           ['#fff', '#ffd700', '#ffeb3b', '#00e676']; // Craft colors
+            
+            // Screen Shake for big events
+            if (type === 'craft' || type === 'serve') {
+                document.body.classList.add('shake-effect');
+                setTimeout(() => document.body.classList.remove('shake-effect'), 500);
+            }
+
+            for(let i=0; i<count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                
+                // Random Size
+                const size = 8 + Math.random() * 15;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Random direction & distance
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 80 + Math.random() * 120; // Further distance
+                const tx = Math.cos(angle) * dist + 'px';
+                const ty = Math.sin(angle) * dist + 'px';
+                
+                p.style.setProperty('--tx', tx);
+                p.style.setProperty('--ty', ty);
+                p.style.animation = `pop-out 0.8s ease-out forwards`;
+                
+                document.body.appendChild(p);
+                setTimeout(() => document.body.removeChild(p), 800);
+            }
+
+            if (type === 'serve') {
+                // Floating Hearts
+                for(let i=0; i<5; i++) {
+                    const heart = document.createElement('div');
+                    heart.innerText = ['💖', '🥰', '😍', '⭐', '👍'][i];
+                    heart.style.position = 'fixed';
+                    heart.style.left = (x - 30 + Math.random() * 60) + 'px';
+                    heart.style.top = (y - 30 + Math.random() * 60) + 'px';
+                    heart.style.fontSize = (2 + Math.random()) + 'rem';
+                    heart.style.pointerEvents = 'none';
+                    heart.style.zIndex = 10001;
+                    heart.style.animation = `float-up ${1 + Math.random()}s ease-out forwards`;
+                    document.body.appendChild(heart);
+                    setTimeout(() => document.body.removeChild(heart), 1500);
+                }
+            }
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animationDuration = (2 + Math.random() * 3) + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => document.body.removeChild(confetti), 5000);
+            }
+        }
+
+        // --- Drag & Drop (Mouse) ---
+        function dragStartIngredient(e, itemId) {
+            e.dataTransfer.setData("type", "ingredient");
+            e.dataTransfer.setData("itemId", itemId);
+        }
+
+        function allowDrop(e) { e.preventDefault(); }
+
+        function dropIngredient(e, targetIngId) {
+            e.preventDefault();
+            // Ingredients can only be dropped in kitchen scene
+            if (currentScene !== 'kitchen') return;
+            const type = e.dataTransfer.getData("type");
+            const itemId = e.dataTransfer.getData("itemId");
+            if (handleIngredientDrop(type, itemId, targetIngId)) {
+                createVisualEffect(e.clientX, e.clientY, 'ingredient');
+            }
+        }
+
+        function handleIngredientDrop(type, itemId, targetIngId) {
+            if (type !== "ingredient") return false;
+            if (currentScene !== 'kitchen') return false;
+
+            if (itemId !== targetIngId) {
+                alert("이 칸에는 다른 재료가 들어갑니다!");
+                return false;
+            }
+
+            if (state.inventory[itemId] > 0) {
+                const recipe = recipes.find(r => r.id === activeRecipeId);
+                const currentQty = craftingSlots[itemId] || 0;
+                if (currentQty < recipe.req[itemId]) {
+                    state.inventory[itemId]--;
+                    craftingSlots[itemId] = currentQty + 1;
+                    updateUI();
+                    return true;
+                } else {
+                    alert("이미 필요한 만큼 넣었습니다.");
+                    return false;
+                }
+            } else {
+                alert("재료가 부족합니다! 창고에서 구해주세요.");
+                return false;
+            }
+        }
+        
+        function dragStartDrink(e) {
+            e.dataTransfer.setData("type", "drink");
+        }
+
+        function dropDrink(e, customerIndex) {
+            e.preventDefault();
+            if (currentScene !== 'counter') return;
+
+            e.currentTarget.classList.remove('drag-over');
+            const type = e.dataTransfer.getData("type");
+            
+            // Ensure index is valid number
+            if (typeof customerIndex !== 'number') {
+                // Try to get from target if passed as event or string
+                const target = e.currentTarget;
+                if (target && target.dataset.index) {
+                    customerIndex = parseInt(target.dataset.index);
+                }
+            }
+
+            if (handleDrinkDrop(type, customerIndex)) {
+                createVisualEffect(e.clientX, e.clientY, 'serve');
+            }
+        }
+
+        function handleDrinkDrop(type, customerIndex) {
+            if (type !== "drink") return false;
+            if (!finishedDrink) return false;
+            if (currentScene !== 'counter') return false;
+
+            // Validate index
+            if (customerIndex < 0 || customerIndex >= state.customers.length) return false;
+
+            const customer = state.customers[customerIndex];
+            
+            if (finishedDrink.quality === 'F') {
+                serveCustomer(customerIndex, 'F');
+                return true;
+            } else if (customer.orderId === finishedDrink.recipeId) {
+                serveCustomer(customerIndex, finishedDrink.quality);
+                return true;
+            } else {
+                alert("이 손님이 주문한 음료가 아닙니다!");
+                return false;
+            }
+        }
+
+        // --- Optimized Touch Drag Logic (Mobile Support) ---
+        let dragGhost = null;
+        let draggingItem = null;
+        let activeTouchId = null;
+        let initialTouchX = 0;
+        let initialTouchY = 0;
+        let currentTouchX = 0;
+        let currentTouchY = 0;
+        let isDragging = false;
+        let rAFId = null;
+
+        // Highlight Helper
+        function highlightDropZones(type, highlight) {
+            if (type === 'ingredient') {
+                document.querySelectorAll('.slot').forEach(el => {
+                    if (highlight) el.classList.add('highlight-drop');
+                    else el.classList.remove('highlight-drop');
+                });
+            } else if (type === 'drink') {
+                document.querySelectorAll('.customer-card').forEach(el => {
+                    if (highlight) el.classList.add('highlight-drop');
+                    else el.classList.remove('highlight-drop');
+                });
+            }
+        }
+
+        function updateGhostPosition() {
+            if (!isDragging || !dragGhost) return;
+            
+            // Calculate delta
+            const deltaX = currentTouchX - initialTouchX;
+            const deltaY = currentTouchY - initialTouchY;
+            
+            // Apply transform (highly performant)
+            dragGhost.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            rAFId = requestAnimationFrame(updateGhostPosition);
+        }
+
+        document.addEventListener('touchstart', function(e) {
+            if (isDragging) return; // Ignore multitouch start if already dragging
+
+            const target = e.target.closest('.draggable-item, .drink-item');
+            if (!target) return;
+            // Fix: Check if the target is a button or inside a button (to allow clicks)
+            if (e.target.closest('button')) return;
+
+            e.preventDefault(); // Stop scrolling immediately
+            
+            const touch = e.changedTouches[0];
+            activeTouchId = touch.identifier;
+            draggingItem = target;
+            isDragging = true;
+            
+            // Store initial positions
+            initialTouchX = touch.clientX;
+            initialTouchY = touch.clientY;
+            currentTouchX = touch.clientX;
+            currentTouchY = touch.clientY;
+            
+            // Create Ghost
+            dragGhost = target.cloneNode(true);
+            dragGhost.classList.add('drag-ghost');
+            
+            // Set initial fixed position to match the original element exactly
+            const rect = target.getBoundingClientRect();
+            dragGhost.style.left = rect.left + 'px';
+            dragGhost.style.top = rect.top + 'px';
+            dragGhost.style.width = rect.width + 'px';
+            dragGhost.style.height = rect.height + 'px';
+            dragGhost.style.margin = '0'; // Reset margins
+            dragGhost.style.transform = 'translate(0, 0)'; // Init transform
+            
+            // Visual Cue
+            highlightDropZones(target.dataset.type, true);
+            
+            document.body.appendChild(dragGhost);
+            
+            // Start animation loop
+            rAFId = requestAnimationFrame(updateGhostPosition);
+            
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            e.preventDefault(); // Prevent scrolling/zooming
+
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === activeTouchId) {
+                    currentTouchX = e.changedTouches[i].clientX;
+                    currentTouchY = e.changedTouches[i].clientY;
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function(e) {
+            handleTouchEnd(e);
+        });
+        
+        document.addEventListener('touchcancel', function(e) {
+            handleTouchEnd(e);
+        });
+
+        function handleTouchEnd(e) {
+            if (!isDragging) return;
+
+            let endedTouch = null;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === activeTouchId) {
+                    endedTouch = e.changedTouches[i];
+                    break;
+                }
+            }
+
+            if (!endedTouch) return; // Not our finger
+
+            // Stop dragging
+            isDragging = false;
+            if (rAFId) cancelAnimationFrame(rAFId);
+            
+            // Cleanup visuals
+            highlightDropZones(draggingItem.dataset.type, false);
+            
+            // Drop Logic
+            // We need to hide ghost to check element below
+            if (dragGhost) dragGhost.style.display = 'none';
+            
+            // Helper to find valid target from coordinates
+            function getTargetFromPoint(x, y) {
+                let el = document.elementFromPoint(x, y);
+                if (!el) return null;
+                return {
+                    slot: el.closest('[data-target-type="slot"]'),
+                    customer: el.closest('[data-target-type="customer"]')
+                };
+            }
+
+            // 1. Check point
+            // Fix: Check across all scenes, but only active one is interactive. 
+            // However, elementFromPoint respects z-index and visibility.
+            let targets = getTargetFromPoint(endedTouch.clientX, endedTouch.clientY);
+            
+            // 2. Fallback to estimated ghost center
+            if (!targets || (!targets.slot && !targets.customer)) {
+                if (dragGhost) {
+                    // Calculate manually based on last known position
+                    const ghostLeft = parseFloat(dragGhost.style.left) + (endedTouch.clientX - initialTouchX);
+                    const ghostTop = parseFloat(dragGhost.style.top) + (endedTouch.clientY - initialTouchY);
+                    const ghostWidth = parseFloat(dragGhost.style.width);
+                    const ghostHeight = parseFloat(dragGhost.style.height);
+                    
+                    const centerX = ghostLeft + ghostWidth / 2;
+                    const centerY = ghostTop + ghostHeight / 2;
+                    
+                    const centerTargets = getTargetFromPoint(centerX, centerY);
+                    if (centerTargets && (centerTargets.slot || centerTargets.customer)) {
+                        targets = centerTargets;
+                    }
+                }
+            }
+
+            // Process Drop
+            if (targets) {
+                const slotTarget = targets.slot;
+                const customerTarget = targets.customer;
+
+                if (draggingItem.dataset.type === 'ingredient' && slotTarget) {
+                    const itemId = draggingItem.dataset.itemId;
+                    const targetIngId = slotTarget.dataset.ingId;
+                    if (handleIngredientDrop('ingredient', itemId, targetIngId)) {
+                        createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'ingredient');
+                    }
+                } else if (draggingItem.dataset.type === 'drink' && customerTarget) {
+                    const indexStr = customerTarget.dataset.index;
+                    if (indexStr !== undefined) {
+                        const index = parseInt(indexStr);
+                        if (handleDrinkDrop('drink', index)) {
+                            createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'serve');
+                        }
+                    }
+                }
+            }
+
+            // Cleanup DOM
+            if (dragGhost && dragGhost.parentNode) {
+                document.body.removeChild(dragGhost);
+            }
+            dragGhost = null;
+            draggingItem = null;
+            activeTouchId = null;
+        }
+
+        // --- Actions ---
+        function selectRecipe(recipeId) {
+            if (craftingSlots && Object.keys(craftingSlots).length > 0) {
+                for (const [ingId, qty] of Object.entries(craftingSlots)) {
+                    state.inventory[ingId] += qty;
+                }
+            }
+            activeRecipeId = recipeId;
+            craftingSlots = {};
+            finishedDrink = null;
+            updateUI();
+        }
+
+        function startGathering(itemId) {
+            currentAction = { type: 'gather', itemId: itemId };
+            currentAttempts = 0; 
+            const problem = generateProblem('easy');
+            openModal(problem, `${ingredients.find(i => i.id === itemId).name} 구하기`);
+        }
+
+        function startCraftingMath() {
+            if (!activeRecipeId) return;
+            const recipe = recipes.find(r => r.id === activeRecipeId);
+            
+            currentAction = { type: 'craft', recipeId: activeRecipeId };
+            currentAttempts = 0; 
+
+            let difficulty = recipe.difficulty;
+            if (difficulty === 'very-hard') difficulty = 'hard'; 
+            
+            // Upgrade Effect: Auto Whisk (Milk menus easier)
+            if (state.upgrades.autoWhisk && (recipe.req.milk || recipe.req.cream || recipe.req.whip)) {
+                if (difficulty === 'hard') difficulty = 'medium';
+                else if (difficulty === 'medium') difficulty = 'easy';
+            }
+
+            const problem = generateProblem(difficulty);
+            openModal(problem, `${recipe.name} 제조 중...`);
+        }
+
+        function unlockRecipe(id) {
+            const recipe = recipes.find(r => r.id === id);
+            if (state.gold >= recipe.unlockCost) {
+                state.gold -= recipe.unlockCost;
+                recipe.unlocked = true;
+                updateUI();
+            }
+        }
+
+        function serveCustomer(index, quality) {
+            const customer = state.customers[index];
+            const recipe = recipes.find(r => r.id === customer.orderId);
+            
+            let reward = recipe.price;
+            let repChange = 0;
+            let msg = "";
+
+            // Fever Multiplier
+            if (state.fever) {
+                reward *= 2;
+            }
+
+            // Upgrade Effect: Premium Machine
+            if (state.upgrades.premiumMachine) {
+                // Simple check if it's a coffee menu (bean required)
+                if (recipe.req.bean) {
+                    reward = Math.floor(reward * 1.2);
+                    msg = "[고급머신] " + msg;
+                }
+            }
+
+            if (quality === 'S') { 
+                reward = Math.floor(reward * 1.5);
+                repChange = 10;
+                msg = "완벽한 음료입니다! 손님이 매우 만족했습니다! (보상 1.5배)";
+            } else if (quality === 'A') { 
+                reward = Math.floor(reward * 1.2);
+                repChange = 5;
+                msg = "맛있는 음료입니다. 손님이 만족했습니다. (보상 1.2배)";
+            } else if (quality === 'B') { 
+                reward = reward; 
+                repChange = 2;
+                msg = "평범한 음료입니다. (정상 가격)";
+            } else if (quality === 'F') { 
+                reward = 0;
+                repChange = -10;
+                msg = "으악! 음식물 쓰레기를 서빙했습니다! 손님이 화를 냅니다.";
+            }
+
+            if (state.fever) msg += " (FEVER x2)";
+
+            // alert(msg); // Removed alert for smoother gameplay with effects
+
+            state.gold += reward;
+            state.rep += repChange;
+            state.customers.splice(index, 1);
+            
+            // Level Progress Check
+            if (levelState.type === 'serve' && quality !== 'F') {
+                levelState.current++;
+            } else if (levelState.type === 'gold') {
+                levelState.current += reward;
+            } else if (levelState.type === 'perfect' && quality === 'S') {
+                levelState.current++;
+            }
+            checkLevelSuccess();
+            
+            finishedDrink = null;
+            craftingSlots = {};
+            updateUI();
+        }
+
+        // --- Modal & Logic ---
+        function openModal(problem, title) {
+            currentProblem = problem;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('problem-display').innerText = problem.expression;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('result-msg').innerText = '';
+            document.getElementById('math-modal').style.display = 'flex';
+            document.getElementById('answer-input').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('math-modal').style.display = 'none';
+            currentProblem = null;
+            currentAction = null;
+        }
+
+        function checkAnswer() {
+            if (!currentProblem) return;
+
+            const input = parseInt(document.getElementById('answer-input').value);
+            const msgBox = document.getElementById('result-msg');
+
+            if (input === currentProblem.answer) {
+                msgBox.innerText = "정답입니다! ⭕";
+                msgBox.className = "result-message correct";
+                
+                // Combo Logic
+                if (currentAction.type === 'craft') {
+                    state.combo++;
+                    if (state.combo >= 3 && !state.fever) {
+                        activateFever();
+                    }
+                }
+
+                setTimeout(() => {
+                    handleSuccess();
+                    closeModal();
+                }, 1000);
+            } else {
+                // Break Combo
+                state.combo = 0;
+                endFever();
+
+                currentAttempts++;
+                if (currentAction.type === 'craft') {
+                    if (currentAttempts >= 3) {
+                        msgBox.innerText = "3번 틀렸습니다... 제조 실패! 😱";
+                        msgBox.className = "result-message wrong";
+                        setTimeout(() => {
+                            handleFailure();
+                            closeModal();
+                        }, 2000);
+                    } else {
+                        msgBox.innerText = `틀렸습니다! 다시 계산해보세요. (남은 기회: ${3 - currentAttempts}번)`;
+                        msgBox.className = "result-message wrong";
+                        document.getElementById('answer-input').value = '';
+                        document.getElementById('answer-input').focus();
+                    }
+                } else {
+                    msgBox.innerText = `틀렸습니다! 다시 계산해보세요.`;
+                    msgBox.className = "result-message wrong";
+                    document.getElementById('answer-input').value = '';
+                    document.getElementById('answer-input').focus();
+                }
+            }
+            updateUI();
+        }
+
+        function activateFever() {
+            state.fever = true;
+            state.feverTime = 15; // 15 seconds
+            
+            // Effect
+            createConfetti();
+            document.body.classList.add('shake-effect');
+            setTimeout(() => document.body.classList.remove('shake-effect'), 500);
+
+            const feverTimer = setInterval(() => {
+                state.feverTime--;
+                if (state.feverTime <= 0) {
+                    clearInterval(feverTimer);
+                    endFever();
+                }
+            }, 1000);
+        }
+
+        function endFever() {
+            state.fever = false;
+            state.feverTime = 0;
+            state.combo = 0;
+            updateUI();
+        }
+
+        function handleSuccess() {
+            if (currentAction.type === 'gather') {
+                state.inventory[currentAction.itemId]++;
+                state.rep += 1;
+            } else if (currentAction.type === 'craft') {
+                let quality = 'B';
+                if (currentAttempts === 0) quality = 'S'; 
+                else if (currentAttempts === 1) quality = 'A'; 
+                else if (currentAttempts === 2) quality = 'B'; 
+
+                finishedDrink = {
+                    recipeId: currentAction.recipeId,
+                    quality: quality
+                };
+                craftingSlots = {}; 
+                
+                // Trigger Craft Success Effect
+                const counter = document.getElementById('serving-counter-kitchen');
+                if (counter) {
+                    const rect = counter.getBoundingClientRect();
+                    createVisualEffect(rect.left + rect.width/2, rect.top + rect.height/2, 'craft');
+                }
+                
+                // Optional: Auto-switch to counter? 
+                // Let's prompt user or just show notification.
+                alert("제조 완료! 카운터로 이동해 서빙하세요.");
+                // switchScene('counter'); // Maybe too abrupt? Let them click back.
+            }
+            updateUI();
+        }
+
+        function handleFailure() {
+            if (currentAction.type === 'craft') {
+                finishedDrink = {
+                    recipeId: currentAction.recipeId,
+                    quality: 'F' 
+                };
+                craftingSlots = {};
+                alert("으악! 음료 제작에 실패해서 음식물쓰레기가 나왔어!");
+            }
+            updateUI();
+        }
+
+        // --- Level System ---
+        function startLevel(level) {
+            levelState.level = level;
+            levelState.current = 0;
+            
+            if (level === 1) {
+                levelState.type = 'serve';
+                levelState.target = 2;
+                levelState.timeLeft = 120;
+            } else if (level === 2) {
+                levelState.type = 'gold';
+                levelState.target = 100;
+                levelState.timeLeft = 150;
+            } else if (level === 3) {
+                levelState.type = 'perfect';
+                levelState.target = 2;
+                levelState.timeLeft = 180;
+            } else {
+                const typeRoll = Math.random();
+                if (typeRoll < 0.4) {
+                    levelState.type = 'serve';
+                    levelState.target = 3 + Math.floor((level - 3) * 0.5);
+                    levelState.timeLeft = 120 + (level * 10);
+                } else if (typeRoll < 0.7) {
+                    levelState.type = 'gold';
+                    levelState.target = 200 + ((level - 3) * 100);
+                    levelState.timeLeft = 150 + (level * 10);
+                } else {
+                    levelState.type = 'perfect';
+                    levelState.target = 2 + Math.floor((level - 3) * 0.3);
+                    levelState.timeLeft = 180 + (level * 10);
+                }
+            }
+            
+            alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
+            updateUI();
+
+            if (levelState.timerId) clearInterval(levelState.timerId);
+            levelState.timerId = setInterval(() => {
+                levelState.timeLeft--;
+                if (levelState.timeLeft <= 0) {
+                    gameOver();
+                }
+                updateUI();
+            }, 1000);
+        }
+
+        function getLevelDesc(state) {
+            if (state.type === 'serve') return `손님 ${state.target}명 서빙`;
+            if (state.type === 'gold') return `골드 ${state.target}G 벌기`;
+            if (state.type === 'perfect') return `완벽한 음료 ${state.target}잔 서빙`;
+            return "";
+        }
+
+        function checkLevelSuccess() {
+            if (levelState.current >= levelState.target) {
+                clearInterval(levelState.timerId);
+                createConfetti();
+                alert(`🎉 Stage ${levelState.level} 클리어! 보너스 50G 획득! 🎉`);
+                state.gold += 50;
+                startLevel(levelState.level + 1);
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(levelState.timerId);
+            clearInterval(gameLoopId);
+            document.getElementById('final-rep').innerText = state.rep;
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+
+        function restartGame() {
+            localStorage.removeItem('baristaGameSave');
+            location.reload();
+        }
+
+        // --- Cheats ---
+        function cheatAddGold() {
+            state.gold += 20000;
+            updateUI();
+            alert("치트 사용: 골드 20,000G 추가됨!");
+        }
+
+        function cheatAddIngredients() {
+            for (const key in state.inventory) {
+                state.inventory[key] += 10;
+            }
+            updateUI();
+            alert("치트 사용: 모든 재료 10개씩 추가됨!");
+        }
+
+        // --- Modal & Logic ---
+        function saveGame() {
+            if (isGameOver) return;
+            const gameData = {
+                state: state,
+                levelState: levelState,
+                recipes: recipes.map(r => ({id: r.id, unlocked: r.unlocked})),
+                activeRecipeId: activeRecipeId,
+                craftingSlots: craftingSlots,
+                finishedDrink: finishedDrink,
+                gameTime: gameTime
+            };
+            localStorage.setItem('baristaGameSave', JSON.stringify(gameData));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('baristaGameSave');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    
+                    // Restore State (Merge to keep new fields)
+                    state = { ...state, ...data.state };
+                    
+                    // Ensure upgrades object exists if loading old save
+                    if (!state.upgrades) state.upgrades = { autoWhisk: false, premiumMachine: false, adBoard: false, autoGather: 0, autoServe: 0 };
+                    if (!state.unlockedItems) state.unlockedItems = [];
+                    if (!state.theme) state.theme = 'default';
+                    if (!state.bgm) state.bgm = 'default';
+
+                    // Apply Theme/BGM on load
+                    applyTheme(state.theme);
+                    applyBgm(state.bgm);
+
+                    data.recipes.forEach(savedR => {
+                        const r = recipes.find(realR => realR.id === savedR.id);
+                        if (r) r.unlocked = savedR.unlocked;
+                    });
+                    levelState = data.levelState;
+                    
+                    if (levelState.timerId) clearInterval(levelState.timerId);
+                    if (levelState.timeLeft > 0) {
+                         levelState.timerId = setInterval(() => {
+                            levelState.timeLeft--;
+                            if (levelState.timeLeft <= 0) {
+                                gameOver();
+                            }
+                            updateUI();
+                        }, 1000);
+                    }
+                    
+                    activeRecipeId = data.activeRecipeId;
+                    craftingSlots = data.craftingSlots || {};
+                    finishedDrink = data.finishedDrink;
+                    gameTime = data.gameTime || 0;
+                    
+                    updateUI();
+                    return true;
+                } catch (e) {
+                    console.error("Save load failed", e);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        // Ensure buttons work by attaching listeners directly if needed
+        // document.addEventListener('DOMContentLoaded', () => { ... }); // Removed to use inline onclick for reliability
+
+        // --- Game Loop ---
+        gameLoopId = setInterval(() => {
+            gameTime++;
+            
+            if (gameTime % 5 === 0) saveGame();
+            
+            if (state.customers.length < 3 && Math.random() < 0.3) { 
+                // Upgrade Effect: Ad Board (Faster Spawns)
+                let spawnChance = 0.3;
+                if (state.upgrades.adBoard) spawnChance = 0.5;
+
+                if (Math.random() < spawnChance) {
+                    const unlockedRecipes = recipes.filter(r => r.unlocked);
+                    if (unlockedRecipes.length > 0) {
+                        const randomRecipe = unlockedRecipes[Math.floor(Math.random() * unlockedRecipes.length)];
+                        const randomName = customerNames[Math.floor(Math.random() * customerNames.length)];
+                        // Random customer image
+                        const randomImg = customerImages[Math.floor(Math.random() * customerImages.length)];
+                        
+                        const patience = 30 + getRandomInt(0, 30);
+    
+                        state.customers.push({ 
+                            orderId: randomRecipe.id, 
+                            name: randomName,
+                            img: randomImg,
+                            time: Date.now(),
+                            maxPatience: patience,
+                            currentPatience: patience
+                        });
+                        updateUI();
+                    }
+                }
+            }
+
+            // Staff Logic
+            if (state.upgrades.staffGather > 0) {
+                state.upgrades.staffGather -= 1000;
+                // Auto gather low ingredients
+                for (const key in state.inventory) {
+                    if (state.inventory[key] < 3 && Math.random() < 0.2) {
+                        state.inventory[key]++;
+                        createVisualEffect(window.innerWidth/2, window.innerHeight/2, 'ingredient');
+                    }
+                }
+            }
+            if (state.upgrades.staffServe > 0) {
+                state.upgrades.staffServe -= 1000;
+                // Auto serve perfect drinks occasionally
+                if (finishedDrink && Math.random() < 0.3) {
+                    const targetIdx = state.customers.findIndex(c => c.orderId === finishedDrink.recipeId);
+                    if (targetIdx !== -1) {
+                         serveCustomer(targetIdx, finishedDrink.quality);
+                    }
+                }
+            }
+
+            // Update Patience (Paused in Shop)
+            if (!currentProblem && currentScene !== 'shop') {
+                for (let i = state.customers.length - 1; i >= 0; i--) {
+                    const c = state.customers[i];
+                    c.currentPatience--;
+                    if (c.currentPatience <= 0) {
+                        state.customers.splice(i, 1);
+                        state.rep -= 5;
+                        updateUI();
+                    }
+                }
+            }
+            
+            updateUI();
+
+        }, 1000); 
+
+        // Start Game
+        if (!loadGame()) {
+            startLevel(1);
+        }
+        updateUI();
+
+        window.addEventListener('beforeunload', () => {
+            saveGame();
+        });
+
+    </script>
+</body>
+</html>
