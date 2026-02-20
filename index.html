@@ -463,6 +463,7 @@
         .drag-ghost {
             position: fixed;
             pointer-events: none;
+            touch-action: none;
             z-index: 9999;
             opacity: 0.85;
             transform-origin: 0 0;
@@ -530,6 +531,10 @@
             opacity: 0.4;
             pointer-events: none;
             transform: none !important;
+        }
+        body.dragging-active {
+            touch-action: none !important;
+            -ms-touch-action: none !important;
         }
         
         .item-icon {
@@ -634,8 +639,9 @@
             align-items: stretch;
         }
         #kitchen-layout {
-            display: flex;
-            flex-direction: row;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
             gap: 16px;
             flex: 1;
             min-height: 0;
@@ -643,21 +649,18 @@
             max-width: 1200px;
             align-self: center;
         }
-        #kitchen-main {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        #kitchen-right-sidebar {
-            flex: 0 0 260px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        .kitchen-col-left {
+            grid-column: 1;
             min-width: 0;
         }
-        #kitchen-right-sidebar .sidebar-panel {
+        #recipe-area { grid-row: 1; }
+        #kitchen-area { grid-row: 2; }
+        .kitchen-col-right {
+            grid-column: 2;
+            min-width: 0;
+        }
+        #kitchen-layout .sidebar-panel,
+        #kitchen-layout #inventory-area {
             background: rgba(255,255,255,0.95);
             border: 2px solid #8d6e63;
             border-radius: 10px;
@@ -665,14 +668,14 @@
             flex-shrink: 0;
             min-width: 0;
         }
-        #kitchen-right-sidebar #inventory-area {
+        #kitchen-layout #inventory-area {
             flex: 1 1 auto;
             min-height: 200px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
-        #kitchen-right-sidebar #inventory-area .item-list {
+        #kitchen-layout #inventory-area .item-list {
             overflow-y: auto;
             flex: 1;
             min-height: 150px;
@@ -681,21 +684,28 @@
             gap: 6px;
             padding: 6px;
         }
-        #kitchen-right-sidebar .sidebar-panel h3,
-        #kitchen-right-sidebar #inventory-area h2 {
+        .inventory-area-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .inventory-area-header h2 { margin: 0 !important; flex-shrink: 0; }
+        .inventory-area-header .inventory-tap-hint { flex-shrink: 0; white-space: nowrap; }
+        #kitchen-layout .sidebar-panel h3,
+        #kitchen-layout #inventory-area h2 {
             margin: 0 0 8px 0;
             font-size: 0.9rem;
         }
 
         #scene-kitchen #recipe-area {
-            flex: 0 0 auto;
             min-height: 100px;
             max-height: 220px;
             overflow: hidden; 
             display: flex;
             flex-direction: column;
-            width: 95%; 
-            max-width: 800px;
             padding: 8px 12px;
         }
         #scene-kitchen #recipe-area h2,
@@ -710,10 +720,23 @@
         }
 
         #scene-kitchen #kitchen-area {
-            flex: 0 0 auto; 
-            width: 95%;
-            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+        }
+        .kitchen-area-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .kitchen-area-header h2 {
+            margin: 0;
             flex-shrink: 0;
+        }
+        .nav-btn-kitchen-inline {
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         #scene-kitchen #inventory-area {
@@ -915,28 +938,13 @@
                 padding: 8px 12px !important;
             }
             
-            /* 주방 - 레시피/재료 그리드 축소 */
+            /* 주방 - 모바일에서도 2열 그리드 유지 */
             #kitchen-layout {
-                flex-direction: column;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
             }
-            #kitchen-main { order: 1; }
-            #kitchen-right-sidebar {
-                order: 0;
-                flex: 0 0 auto;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 10px;
-            }
-            #kitchen-right-sidebar .sidebar-panel,
-            #kitchen-right-sidebar #inventory-area {
-                min-width: 140px;
-                flex: 1 1 140px;
-            }
-            #kitchen-right-sidebar #inventory-area {
-                min-width: 200px;
-                flex: 1 1 200px;
-                min-height: 220px;
+            #kitchen-layout #inventory-area {
+                min-height: 120px;
             }
             #scene-kitchen #recipe-area,
             #scene-kitchen #kitchen-area,
@@ -944,16 +952,19 @@
                 width: 100%;
                 max-width: none;
             }
+            .kitchen-area-header {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
             #kitchen-status-bar {
                 width: 100%;
                 max-width: 100%;
             }
             #scene-kitchen {
-                padding-bottom: 90px;
+                padding-bottom: 20px;
                 min-height: 0;
             }
-            /* 주방·상점 네비 버튼 - 모바일에서 항상 보이도록 고정 */
-            #scene-kitchen .nav-btn-container,
+            /* 상점 네비 버튼 - 모바일에서 하단 고정 */
             #scene-shop .nav-btn-container {
                 position: fixed !important;
                 bottom: 28px !important;
@@ -974,7 +985,6 @@
             #scene-kitchen #kitchen-status-bar { flex-shrink: 0; min-height: 42px; }
             #scene-kitchen #inventory-area { min-height: 120px; max-height: 140px; flex: 0 0 auto; overflow: hidden; display: flex; flex-direction: column; }
             #scene-kitchen #inventory-area h2 { margin: 4px 0 2px; font-size: 0.9rem; flex-shrink: 0; }
-            #scene-kitchen #inventory-area .inventory-tap-hint { display: block !important; }
             #scene-kitchen #inventory-area .item-list { min-height: 100px; max-height: 120px; flex: 1; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
             
             .item-list {
@@ -1089,7 +1099,7 @@
             #scene-kitchen {
                 flex-direction: column;
                 flex-wrap: nowrap;
-                padding-bottom: 100px;
+                padding-bottom: 20px;
                 height: auto !important;
                 min-height: 0;
             }
@@ -1100,9 +1110,6 @@
             }
             #scene-kitchen #kitchen-area,
             #scene-kitchen #inventory-area {
-                flex: 0 0 auto !important;
-            }
-            #kitchen-right-sidebar {
                 flex: 0 0 auto !important;
             }
             #scene-kitchen #inventory-area {
@@ -1118,9 +1125,9 @@
             body { padding-bottom: 35px; }
             #scene-counter { padding-bottom: 70px; }
             #scene-counter .nav-btn-container,
-            #scene-kitchen .nav-btn-container,
+            #scene-counter .nav-btn-container,
             #scene-shop .nav-btn-container { bottom: 24px; }
-            #scene-kitchen { padding-bottom: 70px; }
+            #scene-kitchen { padding-bottom: 20px; }
             #scene-shop { padding-bottom: 68px; }
             header { padding: 4px 6px; }
             header > div:last-child { font-size: 0.6rem; }
@@ -1149,9 +1156,8 @@
         @media (max-width: 480px) and (max-height: 600px) {
             body { padding-bottom: 32px; }
             #scene-counter .nav-btn-container,
-            #scene-kitchen .nav-btn-container,
             #scene-shop .nav-btn-container { bottom: 22px; }
-            #scene-kitchen { padding-bottom: 68px; }
+            #scene-kitchen { padding-bottom: 20px; }
             #scene-shop { padding-bottom: 65px; }
             .counter-background-wrapper { top: 20px; height: 55%; max-height: 46vh; }
             .serving-counter-wrapper { padding-top: 8px; }
@@ -1162,35 +1168,30 @@
             .customer-card { width: 95px; padding: 4px; }
         }
 
-        /* 모바일용 플로팅 네비 (body 직계, 항상 화면 하단 고정) */
+        /* 플로팅 네비 - 상점용 (주방은 제조대 옆 인라인 버튼 사용) */
         .floating-nav {
             position: fixed;
-            bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-            left: 0;
-            right: 0;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
             z-index: 99999;
             display: flex;
             justify-content: center;
-            padding: 12px 16px;
-            background: rgba(255,255,255,0.98);
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
             pointer-events: auto;
+            opacity: 0.9;
         }
         .floating-nav .btn { font-size: 1rem !important; padding: 10px 24px !important; }
+        #floating-nav-kitchen { display: none !important; }
         @media (min-width: 769px) {
-            .floating-nav { display: none !important; }
+            #floating-nav-shop { display: none !important; }
         }
         @media (max-width: 768px) {
-            body:has(#scene-kitchen.active) #floating-nav-kitchen,
-            body.scene-kitchen #floating-nav-kitchen { display: flex !important; visibility: visible !important; }
             body:has(#scene-shop.active) #floating-nav-shop,
             body.scene-shop #floating-nav-shop { display: flex !important; visibility: visible !important; }
-        }
-        @media (max-height: 600px) {
-            .floating-nav { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
-        }
-        @media (max-width: 480px) and (max-height: 600px) {
-            .floating-nav { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
         }
 
         /* 버전 정보 (화면 하단, 모든 씬에서 항상 표시) */
@@ -1241,7 +1242,7 @@
 
             <div class="serving-counter-wrapper" style="margin-top: auto; width: 100%; text-align: center;">
                 <div class="serving-counter-area" id="serving-counter-main">
-                    <span class="serving-counter-label">(서빙하려면 끌어서 고객에게 전달하세요)</span>
+                    <span class="serving-counter-label">(음료 더블탭 → 손님에게 전달)</span>
                     <div class="serving-counter-slots"></div>
                 </div>
             </div>
@@ -1257,60 +1258,57 @@
             <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">🍳 주방 (음료 제조)</h2>
             
             <div id="kitchen-layout">
-                <!-- 왼쪽: 레시피, 제조대 -->
-                <div id="kitchen-main">
-                    <div id="recipe-area" class="panel">
+                <!-- 왼쪽 열: 레시피 메뉴, 제조대 -->
+                <div id="recipe-area" class="panel kitchen-col-left">
                         <h2 style="margin: 0 0 2px 0;">📖 레시피 & 메뉴 선택</h2>
                         <p style="font-size: 0.8rem; text-align: center; margin: 0 0 5px 0;">만들고 싶은 메뉴를 클릭해서 제조대에 세팅하세요.</p>
                         <div class="item-list" id="upgrade-list">
                             <!-- Generated by JS -->
                         </div>
-                    </div>
-
-                    <div id="kitchen-area" class="panel">
-                        <h2>☕ 제조대</h2>
-                        <div id="crafting-area">
-                            <div id="current-recipe-info" style="margin-bottom: 10px; font-weight: bold; color: #555;">
-                                만들 메뉴를 레시피북에서 선택하세요!
-                            </div>
-                            
-                            <div id="crafting-slots">
-                                <!-- Slots generated by JS -->
-                            </div>
-
-                            <button id="craft-btn" class="btn" onclick="startCraftingMath()" disabled style="font-size: 1.2rem; padding: 10px 30px;">
-                                만들기 (문제 풀기)
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- 오른쪽: 완성된 음료 + 대기손님 + 재료 창고 -->
-                <div id="kitchen-right-sidebar">
-                    <div class="sidebar-panel">
+                <div id="kitchen-area" class="panel kitchen-col-left">
+                        <div class="kitchen-area-header">
+                            <h2>☕ 제조대</h2>
+                            <button class="btn nav-btn nav-btn-kitchen-inline" onclick="switchScene('counter')">🔙 카운터로 복귀</button>
+                        </div>
+                        <div id="crafting-area">
+                                <div id="current-recipe-info" style="margin-bottom: 10px; font-weight: bold; color: #555;">
+                                    만들 메뉴를 레시피북에서 선택하세요!
+                                </div>
+                                
+                                <div id="crafting-slots">
+                                    <!-- Slots generated by JS -->
+                                </div>
+
+                                <button id="craft-btn" class="btn" onclick="startCraftingMath()" disabled style="font-size: 1.2rem; padding: 10px 30px;">
+                                    만들기 (문제 풀기)
+                                </button>
+                        </div>
+                </div>
+
+                <!-- 오른쪽 열: 완성된 음료, 대기손님, 재료 창고 -->
+                <div class="sidebar-panel kitchen-col-right" style="grid-row: 1;">
                         <h3>🍽️ 완성된 음료</h3>
                         <div class="serving-counter-area" id="serving-counter-kitchen">
-                            <div style="color: #999;">음료가 완성되면 여기에 나타납니다.<br>손님에게 드래그해서 서빙하세요!</div>
+                            <div style="color: #999;">음료가 완성되면 여기에 나타납니다.<br>더블탭으로 손님에게 서빙!</div>
                         </div>
-                    </div>
-                    <div class="sidebar-panel">
-                        <h3>👥 대기 손님</h3>
-                        <div id="kitchen-status-bar">
-                            <!-- JS Generated -->
-                        </div>
-                    </div>
-                    <div id="inventory-area" class="panel sidebar-panel">
-                        <h2 style="margin: 0 0 8px 0; font-size: 0.95rem;">📦 재료 창고</h2>
-                        <p class="inventory-tap-hint" style="display:none; margin:0 0 4px 0; font-size:0.7rem; color:#666;">재료 탭 → 제조대 슬롯 탭</p>
-                        <div class="item-list" id="inventory-list">
-                            <!-- Generated by JS -->
-                        </div>
+                </div>
+                <div class="sidebar-panel kitchen-col-right" style="grid-row: 2;">
+                    <h3>👥 대기 손님</h3>
+                    <div id="kitchen-status-bar">
+                        <!-- JS Generated -->
                     </div>
                 </div>
-            </div>
-
-            <div class="nav-btn-container">
-                <button class="btn nav-btn" onclick="switchScene('counter')">🔙 카운터로 복귀</button>
+                <div id="inventory-area" class="panel sidebar-panel kitchen-col-right" style="grid-row: 3;">
+                    <div class="inventory-area-header">
+                        <h2 style="margin:0; font-size:0.95rem;">📦 재료 창고</h2>
+                        <p class="inventory-tap-hint" style="margin:0; font-size:0.65rem; color:#666;">재료를 더블탭→제조대에 올리기</p>
+                    </div>
+                    <div class="item-list" id="inventory-list">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1375,7 +1373,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.000991</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00092</div>
 
     <script>
         // --- Game Data ---
@@ -1579,6 +1577,7 @@
         };
 
         let gameTime = 0;
+        let lastCustomerSpawnTime = 0;
         let gameLoopId = null;
         let isGameOver = false;
 
@@ -1964,12 +1963,11 @@
             ingredients.forEach(item => {
                 const count = state.inventory[item.id] || 0;
                 const div = document.createElement('div');
-                div.className = 'item-card draggable-item' + (selectedIngredientForTap === item.id ? ' tap-selected' : '');
+                div.className = 'item-card draggable-item';
                 div.draggable = true;
                 div.dataset.type = 'ingredient';
                 div.dataset.itemId = item.id;
                 div.ondragstart = (e) => dragStartIngredient(e, item.id);
-                div.onclick = (e) => handleIngredientTap(e, item.id);
                 
                 div.innerHTML = `
                     <div class="item-icon">${item.icon}</div>
@@ -2041,7 +2039,6 @@
                 slotDiv.dataset.ingId = ingId;
                 slotDiv.ondragover = (e) => allowDrop(e);
                 slotDiv.ondrop = (e) => dropIngredient(e, ingId);
-                slotDiv.onclick = (e) => handleSlotTap(ingId, e);
                 
                 let content = '';
                 if (currentQty > 0) {
@@ -2354,26 +2351,31 @@
             }
         }
 
-        /* --- 모바일 탭으로 추가 (드래그 대안) --- */
-        let selectedIngredientForTap = null;
-        function handleIngredientTap(e, itemId) {
-            if (e && e.target.closest('button')) return;
-            if (currentScene !== 'kitchen') return;
-            document.querySelectorAll('.draggable-item[data-type="ingredient"]').forEach(el => el.classList.remove('tap-selected'));
-            if (selectedIngredientForTap === itemId) {
-                selectedIngredientForTap = null;
-                return;
+        /* --- 더블탭: 재료→제조대, 음료→고객 --- */
+        let lastTapTarget = null;
+        let lastTapTime = 0;
+        const DOUBLE_TAP_MS = 400;
+        function handleDoubleTapIngredient(itemId, clientX, clientY) {
+            if (!activeRecipeId) return;
+            const recipe = recipes.find(r => r.id === activeRecipeId);
+            if (!recipe || !recipe.req[itemId]) return;
+            const slot = document.querySelector(`.slot[data-ing-id="${itemId}"]`);
+            if (!slot) return;
+            if (handleIngredientDrop('ingredient', itemId, itemId)) {
+                createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'ingredient');
             }
-            selectedIngredientForTap = itemId;
-            const card = document.querySelector(`.draggable-item[data-item-id="${itemId}"]`);
-            if (card) card.classList.add('tap-selected');
         }
-        function handleSlotTap(ingId, ev) {
-            if (!selectedIngredientForTap || currentScene !== 'kitchen') return;
-            if (handleIngredientDrop('ingredient', selectedIngredientForTap, ingId)) {
-                const x = ev && ev.clientX != null ? ev.clientX : window.innerWidth / 2;
-                const y = ev && ev.clientY != null ? ev.clientY : window.innerHeight / 2;
-                createVisualEffect(x, y, 'ingredient');
+        function handleDoubleTapDrink(clientX, clientY) {
+            if (!finishedDrink || state.customers.length === 0) return;
+            if (finishedDrink.quality === 'F') {
+                if (handleDrinkDrop('drink', 0)) createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'serve');
+            } else {
+                const idx = state.customers.findIndex(c => c.orderId === finishedDrink.recipeId);
+                if (idx >= 0 && handleDrinkDrop('drink', idx)) {
+                    createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'serve');
+                } else if (state.customers.length > 0) {
+                    alert('이 음료를 주문한 손님이 없습니다!');
+                }
             }
         }
 
@@ -2435,11 +2437,38 @@
             dragGhost.style.transform = 'translate(0, 0)';
             highlightDropZones(target.dataset.type, true);
             target.classList.add('dragging-source');
+            document.body.classList.add('dragging-active');
             document.body.appendChild(dragGhost);
         }
 
         document.addEventListener('contextmenu', function(e) {
             if (e.target.closest('.draggable-item, .slot')) e.preventDefault();
+        });
+        let lastTapWasTouch = false;
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('.draggable-item, .drink-item');
+            if (!target || e.target.closest('button')) return;
+            const now = Date.now();
+            // 마우스 더블클릭(detail===2) 또는 연속 클릭(400ms 이내) 감지
+            const isMouseDoubleClick = (e.detail === 2);
+            const isDoubleTap = isMouseDoubleClick || (target === lastTapTarget && (now - lastTapTime) <= DOUBLE_TAP_MS);
+            if (lastTapWasTouch && target === lastTapTarget && (now - lastTapTime) < 350) {
+                lastTapWasTouch = false;
+                return;
+            }
+            lastTapWasTouch = false;
+            if (isDoubleTap) {
+                lastTapTarget = null;
+                lastTapTime = 0;
+                if (target.dataset.type === 'ingredient' && target.dataset.itemId) {
+                    handleDoubleTapIngredient(target.dataset.itemId, e.clientX, e.clientY);
+                } else if (target.dataset.type === 'drink') {
+                    handleDoubleTapDrink(e.clientX, e.clientY);
+                }
+            } else {
+                lastTapTarget = target;
+                lastTapTime = now;
+            }
         });
         document.addEventListener('touchstart', function(e) {
             if (isDragging) return;
@@ -2486,14 +2515,22 @@
         // 드래그 중: 위치 업데이트 + preventDefault (capture로 먼저 처리)
         document.addEventListener('touchmove', function(e) {
             if (!isDragging) return;
+            let found = false;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 if (e.changedTouches[i].identifier === activeTouchId) {
                     e.preventDefault();
                     currentTouchX = e.changedTouches[i].clientX;
                     currentTouchY = e.changedTouches[i].clientY;
                     updateGhostPosition();
+                    found = true;
                     break;
                 }
+            }
+            if (!found && e.touches && e.touches.length === 1 && e.touches[0].identifier === activeTouchId) {
+                e.preventDefault();
+                currentTouchX = e.touches[0].clientX;
+                currentTouchY = e.touches[0].clientY;
+                updateGhostPosition();
             }
         }, { passive: false, capture: true });
 
@@ -2502,7 +2539,25 @@
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === pendingDrag.touchId) {
                         clearTimeout(pendingDrag.timerId);
+                        const target = pendingDrag.target;
+                        const now = Date.now();
+                        const tx = e.changedTouches[i].clientX;
+                        const ty = e.changedTouches[i].clientY;
+                        const isDoubleTap = (target === lastTapTarget && (now - lastTapTime) <= DOUBLE_TAP_MS);
                         pendingDrag = null;
+                        if (isDoubleTap) {
+                            lastTapTarget = null;
+                            lastTapTime = 0;
+                            if (target.dataset.type === 'ingredient' && target.dataset.itemId) {
+                                handleDoubleTapIngredient(target.dataset.itemId, tx, ty);
+                            } else if (target.dataset.type === 'drink') {
+                                handleDoubleTapDrink(tx, ty);
+                            }
+                        } else {
+                            lastTapTarget = target;
+                            lastTapTime = now;
+                            lastTapWasTouch = true;
+                        }
                         return;
                     }
                 }
@@ -2529,12 +2584,21 @@
                 }
             }
 
-            if (!endedTouch) return; // Not our finger
+            if (!endedTouch) {
+                isDragging = false;
+                document.body.classList.remove('dragging-active');
+                if (draggingItem) draggingItem.classList.remove('dragging-source');
+                highlightDropZones(draggingItem?.dataset?.type, false);
+                if (dragGhost?.parentNode) dragGhost.parentNode.removeChild(dragGhost);
+                dragGhost = null; draggingItem = null; activeTouchId = null;
+                return;
+            }
 
             // Stop dragging
             isDragging = false;
             
             // Cleanup visuals
+            document.body.classList.remove('dragging-active');
             draggingItem.classList.remove('dragging-source');
             highlightDropZones(draggingItem.dataset.type, false);
             
@@ -3080,11 +3144,13 @@
             
             if (gameTime % 5 === 0) saveGame();
             
-            if (state.customers.length < 3 && Math.random() < 0.3) { 
-                // Upgrade Effect: Ad Board (Faster Spawns)
-                let spawnChance = 0.3;
-                if (state.upgrades.adBoard) spawnChance = 0.5;
-
+            if (state.customers.length < 3) { 
+                let spawnChance = 0.5;
+                if (state.upgrades.adBoard) spawnChance = 0.7;
+                const secondsSinceLastSpawn = gameTime - (lastCustomerSpawnTime || 0);
+                if (state.customers.length === 0 && secondsSinceLastSpawn >= 5) {
+                    spawnChance = 1;
+                }
                 if (Math.random() < spawnChance) {
                     const unlockedRecipes = recipes.filter(r => r.unlocked);
                     if (unlockedRecipes.length > 0) {
@@ -3103,6 +3169,7 @@
                             maxPatience: patience,
                             currentPatience: patience
                         });
+                        lastCustomerSpawnTime = gameTime;
                         updateUI();
                     }
                 }
