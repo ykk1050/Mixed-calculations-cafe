@@ -134,10 +134,7 @@
 
         /* Scene 1: Counter (Main) */
         #scene-counter {
-            background-image: url('counter.png');
-            background-size: 90% 90%; /* Smaller to show theme */
-            background-position: center bottom; /* Align to bottom */
-            background-repeat: no-repeat;
+            position: relative;
             justify-content: flex-end; /* Align items to bottom */
             padding-bottom: 20px;
         }
@@ -146,20 +143,38 @@
             display: none; /* Hide header on counter scene */
         }
 
-        /* Customers */
+        /* Counter image wrapper - 고객 위치를 counter.png 비율에 고정 */
+        .counter-background-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            height: 90%;
+            background: url('counter.png') no-repeat center bottom;
+            background-size: 100% 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .counter-background-wrapper > * {
+            pointer-events: auto; /* 고객 영역은 클릭 가능 */
+        }
+
+        /* Customers - counter.png의 카운터 상판(약 32% from bottom) 높이에 맞춤 */
         #customer-display-area {
             display: flex;
             justify-content: space-around;
             align-items: flex-end;
             width: 100%;
-            height: 60%; /* Taller area */
+            height: 55%;
             background: transparent; 
             border-bottom: none;
             margin-bottom: 0;
             position: absolute;
-            bottom: 17.8%; /* Raised a bit more */
+            bottom: 22.4%; /* counter.png 카운터 상판 상단선 기준 */
             left: 0;
             z-index: 5;
+            pointer-events: auto;
         }
 
         .customer-card {
@@ -654,9 +669,11 @@
         <div id="scene-counter" class="scene active">
             <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">☕ 카페 카운터</h2>
             
-            <div id="customer-display-area">
-                <div id="customer-list" style="display: flex; width: 100%; justify-content: space-around;">
-                    <p>손님을 기다리는 중...</p>
+            <div class="counter-background-wrapper">
+                <div id="customer-display-area">
+                    <div id="customer-list" style="display: flex; width: 100%; justify-content: space-around;">
+                        <p>손님을 기다리는 중...</p>
+                    </div>
                 </div>
             </div>
 
