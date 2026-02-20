@@ -230,6 +230,14 @@
             height: 40px; /* Reduced from 60px */
             vertical-align: middle;
         }
+        .customer-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            background: rgba(255,255,255,0.8);
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
 
         /* Serving Counter */
         .serving-counter-area {
@@ -648,6 +656,166 @@
             height: 100%;
             background: #4caf50;
             width: 100%;
+        }
+
+        /* ===== 모바일/스마트패드 반응형 (768px 이하) ===== */
+        @media (max-width: 768px) {
+            body { overflow: auto; min-height: 100vh; }
+            #scene-container { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            
+            /* 헤더 축소 */
+            header {
+                padding: 6px 8px;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            header > div:last-child {
+                font-size: 0.7rem;
+                width: 100%;
+                order: 3;
+            }
+            .stat-box { font-size: 0.9rem; }
+            
+            /* 미션바 축소 */
+            #mission-bar {
+                padding: 6px 8px;
+                font-size: 0.85rem;
+            }
+            
+            /* 씬 패딩 축소 */
+            .scene { padding: 8px; }
+            
+            /* 카운터 - 고객 영역 축소 */
+            .counter-background-wrapper {
+                width: 100%;
+                height: 85%;
+            }
+            #customer-display-area {
+                bottom: 28%;
+                height: 50%;
+            }
+            .customer-card {
+                width: 140px;
+                padding: 8px;
+                margin: 0 4px;
+            }
+            .customer-img-container {
+                width: 120px;
+                height: 160px;
+                margin-bottom: 8px;
+            }
+            .customer-order-bubble {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+                top: -50px;
+            }
+            .customer-order-bubble img { height: 28px; }
+            .patience-bar-container { margin-top: 3px; }
+            .customer-name { font-size: 0.8rem; padding: 2px 6px; }
+            
+            /* 서빙 카운터 */
+            .serving-counter-area {
+                min-height: 55px;
+                padding: 8px;
+            }
+            .serving-counter-label {
+                font-size: 0.75rem;
+                margin-right: 8px;
+            }
+            
+            /* 네비 버튼 */
+            .nav-btn-container {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .nav-btn {
+                font-size: 0.85rem !important;
+                padding: 8px 12px !important;
+            }
+            
+            /* 주방 - 레시피/재료 그리드 축소 */
+            #scene-kitchen #recipe-area,
+            #scene-kitchen #kitchen-area,
+            #scene-kitchen #inventory-area,
+            #kitchen-status-bar {
+                width: 100%;
+                max-width: none;
+            }
+            #scene-kitchen {
+                padding-bottom: 60px;
+                min-height: auto;
+            }
+            #scene-kitchen #recipe-area { min-height: 120px; padding: 6px; }
+            #scene-kitchen #inventory-area { min-height: 100px; }
+            
+            .item-list {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                gap: 6px;
+                padding: 6px;
+            }
+            .item-card {
+                min-height: 95px;
+                padding: 6px;
+            }
+            .item-icon {
+                font-size: 1.4rem;
+                height: 36px;
+                width: 36px;
+            }
+            
+            /* 제조대 슬롯 */
+            .slot {
+                min-width: 60px;
+                padding: 6px;
+            }
+            .slot-label { font-size: 0.65rem; }
+            
+            #craft-btn {
+                font-size: 1rem !important;
+                padding: 8px 16px !important;
+            }
+            
+            /* 주방 완성 음료 */
+            #serving-counter-kitchen { min-height: 50px; padding: 6px; }
+            
+            /* 상점 */
+            #shop-area { height: 55vh; }
+            .shop-item {
+                min-width: 90px;
+                padding: 6px;
+            }
+            
+            /* 수학 모달 */
+            .modal-content { padding: 20px; }
+            .math-problem { font-size: 1.5rem; margin: 15px 0; }
+            .math-input { font-size: 1.2rem; width: 120px; }
+            .guide-text { font-size: 0.8rem; padding: 8px; }
+            
+            /* 콤보 */
+            #combo-container { top: 50px; left: 10px; }
+            #combo-count { font-size: 1.2rem; }
+            #fever-text { font-size: 1.5rem; }
+        }
+        
+        /* 매우 작은 화면 (480px 이하) */
+        @media (max-width: 480px) {
+            .customer-card { width: 110px; padding: 6px; }
+            .customer-name { font-size: 0.7rem; }
+            .customer-img-container {
+                width: 95px;
+                height: 130px;
+            }
+            .customer-order-bubble { font-size: 0.75rem; top: -40px; }
+            .customer-order-bubble img { height: 22px; }
+            
+            .item-list { grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); }
+            .item-card { min-height: 85px; }
+            .item-icon { height: 30px; width: 30px; font-size: 1.2rem; }
+            
+            .serving-counter-label { font-size: 0.65rem; }
+            .nav-btn { font-size: 0.8rem !important; padding: 6px 10px !important; }
         }
 
     </style>
@@ -1569,7 +1737,7 @@
                     <div class="customer-img-container">
                         <img src="${customerImg}" alt="Customer">
                     </div>
-                    <div style="font-weight:bold; font-size: 1.2rem; margin-bottom: 5px; background: rgba(255,255,255,0.8); padding: 2px 8px; border-radius: 5px;">${customer.name}</div>
+                    <div class="customer-name">${customer.name}</div>
                     <div class="patience-bar-container">
                         <div class="patience-bar" style="width:${patiencePct}%; background-color:${barColor};"></div>
                     </div>
