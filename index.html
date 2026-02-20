@@ -1291,7 +1291,7 @@
                 <div class="sidebar-panel kitchen-col-right" style="grid-row: 1;">
                         <h3>🍽️ 완성된 음료</h3>
                         <div class="serving-counter-area" id="serving-counter-kitchen">
-                            <div style="color: #999;">음료가 완성되면 여기에 나타납니다.<br>더블탭으로 손님에게 서빙!</div>
+                            <div class="serving-counter-slots" style="flex:1;"></div>
                         </div>
                 </div>
                 <div class="sidebar-panel kitchen-col-right" style="grid-row: 2;">
@@ -1373,7 +1373,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00092</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00093</div>
 
     <script>
         // --- Game Data ---
@@ -1587,7 +1587,8 @@
         
         let activeRecipeId = null;
         let craftingSlots = {}; 
-        let finishedDrink = null;
+        let finishedDrinks = [];
+        const MAX_FINISHED_DRINKS = 10;
 
         // --- Math Engine ---
         function getRandomInt(min, max) {
@@ -2056,9 +2057,9 @@
                 if (currentQty < reqQty) allFilled = false;
             }
 
-            btn.disabled = !allFilled || finishedDrink !== null; 
-            if (finishedDrink !== null) {
-                btn.innerText = "음료 수령 필요";
+            btn.disabled = !allFilled || finishedDrinks.length >= MAX_FINISHED_DRINKS; 
+            if (finishedDrinks.length >= MAX_FINISHED_DRINKS) {
+                btn.innerText = "제조대 가득 참";
             } else {
                 btn.innerText = "만들기 (문제 풀기)";
             }
@@ -2072,32 +2073,35 @@
                 const target = slotsEl || counter;
                 
                 target.innerHTML = '';
-                if (finishedDrink) {
-                    const drinkDiv = document.createElement('div');
-                    drinkDiv.className = 'drink-item';
-                    drinkDiv.draggable = true;
-                    drinkDiv.dataset.type = 'drink';
-                    drinkDiv.ondragstart = (e) => dragStartDrink(e);
-                    
-                    let qualityIcon = '';
-                    let recipeIcon = '';
-                    
-                    if (finishedDrink.quality === 'F') {
-                        recipeIcon = '🗑️';
-                        qualityIcon = '💩';
-                    } else {
-                        const recipe = recipes.find(r => r.id === finishedDrink.recipeId);
-                        recipeIcon = recipe.icon;
-                        if (finishedDrink.quality === 'S') qualityIcon = '👑'; 
-                        else if (finishedDrink.quality === 'A') qualityIcon = '⭐'; 
-                        else if (finishedDrink.quality === 'B') qualityIcon = '🙂'; 
-                    }
-                    
-                    drinkDiv.innerHTML = `
-                        <div style="transform: scale(1.6); transform-origin: center;">${recipeIcon}</div>
-                        <div class="drink-quality">${qualityIcon}</div>
-                    `;
-                    target.appendChild(drinkDiv);
+                if (finishedDrinks.length > 0) {
+                    finishedDrinks.forEach((drink, idx) => {
+                        const drinkDiv = document.createElement('div');
+                        drinkDiv.className = 'drink-item';
+                        drinkDiv.draggable = true;
+                        drinkDiv.dataset.type = 'drink';
+                        drinkDiv.dataset.drinkIndex = String(idx);
+                        drinkDiv.ondragstart = (e) => dragStartDrink(e);
+                        
+                        let qualityIcon = '';
+                        let recipeIcon = '';
+                        
+                        if (drink.quality === 'F') {
+                            recipeIcon = '🗑️';
+                            qualityIcon = '💩';
+                        } else {
+                            const recipe = recipes.find(r => r.id === drink.recipeId);
+                            recipeIcon = recipe ? recipe.icon : '🍵';
+                            if (drink.quality === 'S') qualityIcon = '👑'; 
+                            else if (drink.quality === 'A') qualityIcon = '⭐'; 
+                            else if (drink.quality === 'B') qualityIcon = '🙂'; 
+                        }
+                        
+                        drinkDiv.innerHTML = `
+                            <div style="transform: scale(1.6); transform-origin: center;">${recipeIcon}</div>
+                            <div class="drink-quality">${qualityIcon}</div>
+                        `;
+                        target.appendChild(drinkDiv);
+                    });
                 } else {
                     if (currentScene === 'counter') {
                         target.innerHTML = '<div style="color: #666;">주방에서 음료를 만들어오세요!</div>';
@@ -2305,7 +2309,9 @@
         }
         
         function dragStartDrink(e) {
+            const drinkIndex = e.target.dataset.drinkIndex;
             e.dataTransfer.setData("type", "drink");
+            e.dataTransfer.setData("drinkIndex", drinkIndex !== undefined ? String(drinkIndex) : "0");
         }
 
         function dropDrink(e, customerIndex) {
@@ -2314,6 +2320,7 @@
 
             e.currentTarget.classList.remove('drag-over');
             const type = e.dataTransfer.getData("type");
+            const drinkIndex = parseInt(e.dataTransfer.getData("drinkIndex") || "0");
             
             // Ensure index is valid number
             if (typeof customerIndex !== 'number') {
@@ -2324,26 +2331,27 @@
                 }
             }
 
-            if (handleDrinkDrop(type, customerIndex)) {
+            if (handleDrinkDrop(type, customerIndex, drinkIndex)) {
                 createVisualEffect(e.clientX, e.clientY, 'serve');
             }
         }
 
-        function handleDrinkDrop(type, customerIndex) {
+        function handleDrinkDrop(type, customerIndex, drinkIndex) {
             if (type !== "drink") return false;
-            if (!finishedDrink) return false;
+            if (drinkIndex < 0 || drinkIndex >= finishedDrinks.length) return false;
             if (currentScene !== 'counter') return false;
 
-            // Validate index
+            // Validate customer index
             if (customerIndex < 0 || customerIndex >= state.customers.length) return false;
 
+            const drink = finishedDrinks[drinkIndex];
             const customer = state.customers[customerIndex];
             
-            if (finishedDrink.quality === 'F') {
-                serveCustomer(customerIndex, 'F');
+            if (drink.quality === 'F') {
+                serveCustomer(customerIndex, 'F', drinkIndex);
                 return true;
-            } else if (customer.orderId === finishedDrink.recipeId) {
-                serveCustomer(customerIndex, finishedDrink.quality);
+            } else if (customer.orderId === drink.recipeId) {
+                serveCustomer(customerIndex, drink.quality, drinkIndex);
                 return true;
             } else {
                 alert("이 손님이 주문한 음료가 아닙니다!");
@@ -2365,13 +2373,14 @@
                 createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'ingredient');
             }
         }
-        function handleDoubleTapDrink(clientX, clientY) {
-            if (!finishedDrink || state.customers.length === 0) return;
-            if (finishedDrink.quality === 'F') {
-                if (handleDrinkDrop('drink', 0)) createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'serve');
+        function handleDoubleTapDrink(drinkIndex, clientX, clientY) {
+            if (drinkIndex < 0 || drinkIndex >= finishedDrinks.length || state.customers.length === 0) return;
+            const drink = finishedDrinks[drinkIndex];
+            if (drink.quality === 'F') {
+                if (handleDrinkDrop('drink', 0, drinkIndex)) createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'serve');
             } else {
-                const idx = state.customers.findIndex(c => c.orderId === finishedDrink.recipeId);
-                if (idx >= 0 && handleDrinkDrop('drink', idx)) {
+                const idx = state.customers.findIndex(c => c.orderId === drink.recipeId);
+                if (idx >= 0 && handleDrinkDrop('drink', idx, drinkIndex)) {
                     createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'serve');
                 } else if (state.customers.length > 0) {
                     alert('이 음료를 주문한 손님이 없습니다!');
@@ -2463,7 +2472,8 @@
                 if (target.dataset.type === 'ingredient' && target.dataset.itemId) {
                     handleDoubleTapIngredient(target.dataset.itemId, e.clientX, e.clientY);
                 } else if (target.dataset.type === 'drink') {
-                    handleDoubleTapDrink(e.clientX, e.clientY);
+                    const drinkIdx = parseInt(target.dataset.drinkIndex || '0');
+                    handleDoubleTapDrink(drinkIdx, e.clientX, e.clientY);
                 }
             } else {
                 lastTapTarget = target;
@@ -2551,7 +2561,8 @@
                             if (target.dataset.type === 'ingredient' && target.dataset.itemId) {
                                 handleDoubleTapIngredient(target.dataset.itemId, tx, ty);
                             } else if (target.dataset.type === 'drink') {
-                                handleDoubleTapDrink(tx, ty);
+                                const drinkIdx = parseInt(target.dataset.drinkIndex || '0');
+                                handleDoubleTapDrink(drinkIdx, tx, ty);
                             }
                         } else {
                             lastTapTarget = target;
@@ -2708,9 +2719,10 @@
                     }
                 } else if (draggingItem.dataset.type === 'drink' && customerTarget) {
                     const indexStr = customerTarget.dataset.index;
+                    const drinkIdx = parseInt(draggingItem.dataset.drinkIndex || '0');
                     if (indexStr !== undefined) {
                         const index = parseInt(indexStr);
-                        if (handleDrinkDrop('drink', index)) {
+                        if (handleDrinkDrop('drink', index, drinkIdx)) {
                             createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'serve');
                         }
                     }
@@ -2735,7 +2747,6 @@
             }
             activeRecipeId = recipeId;
             craftingSlots = {};
-            finishedDrink = null;
             updateUI();
         }
 
@@ -2775,7 +2786,7 @@
             }
         }
 
-        function serveCustomer(index, quality) {
+        function serveCustomer(index, quality, drinkIndex) {
             const customer = state.customers[index];
             const recipe = recipes.find(r => r.id === customer.orderId);
             
@@ -2823,6 +2834,11 @@
             state.rep += repChange;
             state.customers.splice(index, 1);
             
+            // 제조대에서 해당 음료 제거
+            if (drinkIndex >= 0 && drinkIndex < finishedDrinks.length) {
+                finishedDrinks.splice(drinkIndex, 1);
+            }
+            
             // Level Progress Check
             if (levelState.type === 'serve' && quality !== 'F') {
                 levelState.current++;
@@ -2833,8 +2849,6 @@
             }
             checkLevelSuccess();
             
-            finishedDrink = null;
-            craftingSlots = {};
             updateUI();
         }
 
@@ -2942,10 +2956,10 @@
                 else if (currentAttempts === 1) quality = 'A'; 
                 else if (currentAttempts === 2) quality = 'B'; 
 
-                finishedDrink = {
+                finishedDrinks.push({
                     recipeId: currentAction.recipeId,
                     quality: quality
-                };
+                });
                 craftingSlots = {}; 
                 
                 // Trigger Craft Success Effect
@@ -2965,10 +2979,10 @@
 
         function handleFailure() {
             if (currentAction.type === 'craft') {
-                finishedDrink = {
+                finishedDrinks.push({
                     recipeId: currentAction.recipeId,
                     quality: 'F' 
-                };
+                });
                 craftingSlots = {};
                 alert("으악! 음료 제작에 실패해서 음식물쓰레기가 나왔어!");
             }
@@ -3077,7 +3091,7 @@
                 recipes: recipes.map(r => ({id: r.id, unlocked: r.unlocked})),
                 activeRecipeId: activeRecipeId,
                 craftingSlots: craftingSlots,
-                finishedDrink: finishedDrink,
+                finishedDrinks: finishedDrinks,
                 gameTime: gameTime
             };
             localStorage.setItem('baristaGameSave', JSON.stringify(gameData));
@@ -3122,7 +3136,7 @@
                     
                     activeRecipeId = data.activeRecipeId;
                     craftingSlots = data.craftingSlots || {};
-                    finishedDrink = data.finishedDrink;
+                    finishedDrinks = Array.isArray(data.finishedDrinks) ? data.finishedDrinks : (data.finishedDrink ? [data.finishedDrink] : []);
                     gameTime = data.gameTime || 0;
                     
                     updateUI();
@@ -3189,10 +3203,14 @@
             if (state.upgrades.staffServe > 0) {
                 state.upgrades.staffServe -= 1000;
                 // Auto serve perfect drinks occasionally
-                if (finishedDrink && Math.random() < 0.3) {
-                    const targetIdx = state.customers.findIndex(c => c.orderId === finishedDrink.recipeId);
-                    if (targetIdx !== -1) {
-                         serveCustomer(targetIdx, finishedDrink.quality);
+                if (finishedDrinks.length > 0 && Math.random() < 0.3) {
+                    for (let di = 0; di < finishedDrinks.length; di++) {
+                        const d = finishedDrinks[di];
+                        const targetIdx = state.customers.findIndex(c => c.orderId === d.recipeId);
+                        if (targetIdx !== -1) {
+                            serveCustomer(targetIdx, d.quality, di);
+                            break;
+                        }
                     }
                 }
             }
