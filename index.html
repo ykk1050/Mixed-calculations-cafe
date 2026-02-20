@@ -1170,7 +1170,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00096</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00097</div>
 
     <script>
         // --- Game Data ---
@@ -2140,6 +2140,7 @@
         }
 
         // --- Optimized Touch Drag Logic (Mobile Support) ---
+        // 롱프레스(400ms) 후에만 드래그 시작 → 일반 터치/스와이프는 스크롤로 동작
         let dragGhost = null;
         let draggingItem = null;
         let activeTouchId = null;
@@ -2148,8 +2149,8 @@
         let currentTouchX = 0;
         let currentTouchY = 0;
         let isDragging = false;
-        let pendingDrag = null; // { target, touchId } - 터치 시작만 하고 아직 드래그 미확정
-        const DRAG_THRESHOLD = 10; // 이 거리 이상 움직여야 드래그로 인식 (그 전엔 스크롤 허용)
+        let pendingDrag = null; // { target, touchId, startX, startY, timerId }
+        const LONG_PRESS_MS = 400;
         let rAFId = null;
 
         // Highlight Helper
@@ -2169,88 +2170,95 @@
 
         function updateGhostPosition() {
             if (!isDragging || !dragGhost) return;
-            
-            // Calculate delta
             const deltaX = currentTouchX - initialTouchX;
             const deltaY = currentTouchY - initialTouchY;
-            
-            // Apply transform (highly performant)
             dragGhost.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-            
+            rAFId = requestAnimationFrame(updateGhostPosition);
+        }
+
+        function startDragFromPending(p) {
+            if (!p || isDragging) return;
+            const target = p.target;
+            pendingDrag = null;
+            activeTouchId = p.touchId;
+            draggingItem = target;
+            isDragging = true;
+            initialTouchX = p.startX;
+            initialTouchY = p.startY;
+            currentTouchX = p.startX;
+            currentTouchY = p.startY;
+            dragGhost = target.cloneNode(true);
+            dragGhost.classList.add('drag-ghost');
+            const rect = target.getBoundingClientRect();
+            dragGhost.style.left = rect.left + 'px';
+            dragGhost.style.top = rect.top + 'px';
+            dragGhost.style.width = rect.width + 'px';
+            dragGhost.style.height = rect.height + 'px';
+            dragGhost.style.margin = '0';
+            dragGhost.style.transform = 'translate(0, 0)';
+            highlightDropZones(target.dataset.type, true);
+            document.body.appendChild(dragGhost);
             rAFId = requestAnimationFrame(updateGhostPosition);
         }
 
         document.addEventListener('touchstart', function(e) {
             if (isDragging) return;
-            if (pendingDrag) return; // 이미 다른 터치 대기 중
+            if (pendingDrag) return;
 
             const target = e.target.closest('.draggable-item, .drink-item');
             if (!target) return;
             if (e.target.closest('button')) return;
 
-            // preventDefault 하지 않음 - 스크롤 허용. touchmove에서 거리 확인 후 드래그 확정 시에만 preventDefault
             const touch = e.changedTouches[0];
+            const timerId = setTimeout(function() {
+                if (pendingDrag && pendingDrag.touchId === touch.identifier) {
+                    pendingDrag.longPressReady = true;
+                }
+            }, LONG_PRESS_MS);
             pendingDrag = {
                 target: target,
                 touchId: touch.identifier,
                 startX: touch.clientX,
-                startY: touch.clientY
+                startY: touch.clientY,
+                timerId: timerId
             };
         }, { passive: true });
 
+        // 스크롤 방해 없음: 롱프레스 전 움직임이면 pending만 해제 (passive)
         document.addEventListener('touchmove', function(e) {
-            if (isDragging) {
-                e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeTouchId) {
-                        currentTouchX = e.changedTouches[i].clientX;
-                        currentTouchY = e.changedTouches[i].clientY;
-                        break;
-                    }
+            if (!pendingDrag || pendingDrag.longPressReady) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === pendingDrag.touchId) {
+                    clearTimeout(pendingDrag.timerId);
+                    pendingDrag = null;
+                    break;
                 }
-                return;
             }
-            if (!pendingDrag) return;
+        }, { passive: true });
 
+        // 드래그 중에만 preventDefault (passive: false 필수)
+        document.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === activeTouchId) {
+                    currentTouchX = e.changedTouches[i].clientX;
+                    currentTouchY = e.changedTouches[i].clientY;
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        // 롱프레스 후 첫 움직임: 드래그 시작
+        document.addEventListener('touchmove', function(e) {
+            if (!pendingDrag || !pendingDrag.longPressReady) return;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 if (t.identifier === pendingDrag.touchId) {
-                    const dx = Math.abs(t.clientX - pendingDrag.startX);
-                    const dy = Math.abs(t.clientY - pendingDrag.startY);
-                    const dist = Math.max(dx, dy);
-                    if (dist >= DRAG_THRESHOLD) {
-                        // 수직 스크롤 의도(dy > dx)면 드래그 취소, 스크롤 허용
-                        if (dy > dx) {
-                            pendingDrag = null;
-                            return;
-                        }
-                        // 수평/대각선(드래그 의도): preventDefault 하고 드래그 시작
-                        e.preventDefault();
-                        const target = pendingDrag.target;
-                        const startX = pendingDrag.startX;
-                        const startY = pendingDrag.startY;
-                        pendingDrag = null;
-                        activeTouchId = t.identifier;
-                        draggingItem = target;
-                        isDragging = true;
-                        initialTouchX = startX;
-                        initialTouchY = startY;
-                        currentTouchX = t.clientX;
-                        currentTouchY = t.clientY;
-
-                        dragGhost = target.cloneNode(true);
-                        dragGhost.classList.add('drag-ghost');
-                        const rect = target.getBoundingClientRect();
-                        dragGhost.style.left = rect.left + 'px';
-                        dragGhost.style.top = rect.top + 'px';
-                        dragGhost.style.width = rect.width + 'px';
-                        dragGhost.style.height = rect.height + 'px';
-                        dragGhost.style.margin = '0';
-                        dragGhost.style.transform = 'translate(0, 0)';
-                        highlightDropZones(target.dataset.type, true);
-                        document.body.appendChild(dragGhost);
-                        rAFId = requestAnimationFrame(updateGhostPosition);
-                    }
+                    e.preventDefault();
+                    startDragFromPending(pendingDrag);
+                    currentTouchX = t.clientX;
+                    currentTouchY = t.clientY;
                     break;
                 }
             }
@@ -2260,6 +2268,7 @@
             if (pendingDrag && !isDragging) {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === pendingDrag.touchId) {
+                        clearTimeout(pendingDrag.timerId);
                         pendingDrag = null;
                         return;
                     }
@@ -2269,7 +2278,10 @@
         });
         
         document.addEventListener('touchcancel', function(e) {
-            if (pendingDrag && !isDragging) pendingDrag = null;
+            if (pendingDrag && !isDragging) {
+                clearTimeout(pendingDrag.timerId);
+                pendingDrag = null;
+            }
             handleTouchEnd(e);
         });
 
