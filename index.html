@@ -797,9 +797,23 @@
                 max-width: none;
             }
             #scene-kitchen {
-                padding-bottom: 60px;
+                padding-bottom: 75px;
                 min-height: auto;
             }
+            /* 주방·상점 네비 버튼 - 모바일에서 항상 보이도록 고정 */
+            #scene-kitchen .nav-btn-container,
+            #scene-shop .nav-btn-container {
+                position: fixed;
+                bottom: 28px;
+                left: 0;
+                right: 0;
+                margin: 0;
+                padding: 0 10px;
+                z-index: 100;
+                display: flex;
+                justify-content: center;
+            }
+            #scene-shop { padding-bottom: 70px; }
             #scene-kitchen #recipe-area { min-height: 120px; padding: 6px; }
             #scene-kitchen #inventory-area { min-height: 100px; }
             
@@ -876,7 +890,11 @@
         @media (max-height: 600px) {
             body { padding-bottom: 35px; }
             #scene-counter { padding-bottom: 70px; }
-            #scene-counter .nav-btn-container { bottom: 24px; }
+            #scene-counter .nav-btn-container,
+            #scene-kitchen .nav-btn-container,
+            #scene-shop .nav-btn-container { bottom: 24px; }
+            #scene-kitchen { padding-bottom: 70px; }
+            #scene-shop { padding-bottom: 68px; }
             header { padding: 4px 6px; }
             header > div:last-child { font-size: 0.6rem; }
             #mission-bar { padding: 3px 6px; font-size: 0.75rem; }
@@ -903,7 +921,11 @@
         /* 높이+너비 모두 좁은 화면 */
         @media (max-width: 480px) and (max-height: 600px) {
             body { padding-bottom: 32px; }
-            #scene-counter .nav-btn-container { bottom: 22px; }
+            #scene-counter .nav-btn-container,
+            #scene-kitchen .nav-btn-container,
+            #scene-shop .nav-btn-container { bottom: 22px; }
+            #scene-kitchen { padding-bottom: 68px; }
+            #scene-shop { padding-bottom: 65px; }
             .counter-background-wrapper { top: 20px; height: 55%; max-height: 46vh; }
             .serving-counter-wrapper { padding-top: 8px; }
             #customer-display-area { bottom: 2%; }
@@ -1083,7 +1105,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00091</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00092</div>
 
     <script>
         // --- Game Data ---
