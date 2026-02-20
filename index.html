@@ -905,12 +905,49 @@
             #scene-kitchen #inventory-area .item-list { min-height: 220px; }
         }
         
-        /* 가로모드(랜드스케이프) - 스크롤 맨 아래까지 가능하도록 */
+        /* 가로모드(랜드스케이프) - 주방 스크롤 가능하도록 레이아웃 전환 */
         @media (orientation: landscape) and (max-width: 768px) {
-            body { padding-bottom: 110px; }
+            body { padding-bottom: 110px; overflow-y: auto !important; }
             #scene-counter { padding-bottom: 100px; }
-            #scene-kitchen { min-height: fit-content; padding-bottom: 100px; }
             #scene-shop { padding-bottom: 100px; }
+            /* scene-container가 스크롤, scene은 콘텐츠 높이만큼 늘어남 */
+            #scene-container {
+                overflow-y: auto !important;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y;
+                flex: 1 1 0;
+                min-height: 0;
+                align-items: stretch;
+            }
+            #scene-container .scene {
+                flex: 0 0 auto !important;
+                min-height: min-content !important;
+                overflow-y: visible !important;
+            }
+            /* 주방: 레시피 고정 높이, 나머지 블록 흐름으로 쌓아서 스크롤 */
+            #scene-kitchen {
+                flex-direction: column;
+                min-height: min-content !important;
+                padding-bottom: 100px;
+            }
+            #scene-kitchen #recipe-area {
+                flex: 0 0 auto !important;
+                max-height: 22vh;
+                min-height: 50px;
+            }
+            #scene-kitchen #kitchen-area,
+            #scene-kitchen #kitchen-status-bar,
+            #scene-kitchen #inventory-area {
+                flex: 0 0 auto !important;
+            }
+            #scene-kitchen #inventory-area {
+                min-height: 180px;
+            }
+            #scene-kitchen #inventory-area .item-list {
+                overflow-y: visible;
+                min-height: 150px;
+            }
         }
         
         /* 높이가 좁은 화면 (세로가 짧은 기기) */
@@ -1170,7 +1207,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00097</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00098</div>
 
     <script>
         // --- Game Data ---
