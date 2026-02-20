@@ -797,25 +797,32 @@
                 max-width: none;
             }
             #scene-kitchen {
-                padding-bottom: 75px;
+                padding-bottom: 80px;
                 min-height: auto;
             }
             /* 주방·상점 네비 버튼 - 모바일에서 항상 보이도록 고정 */
             #scene-kitchen .nav-btn-container,
             #scene-shop .nav-btn-container {
-                position: fixed;
-                bottom: 28px;
-                left: 0;
-                right: 0;
-                margin: 0;
-                padding: 0 10px;
-                z-index: 100;
-                display: flex;
-                justify-content: center;
+                position: fixed !important;
+                bottom: 28px !important;
+                left: 0 !important;
+                right: 0 !important;
+                margin: 0 !important;
+                padding: 0 10px !important;
+                z-index: 10000 !important;
+                display: flex !important;
+                justify-content: center !important;
+                background: rgba(255,255,255,0.95);
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
             }
             #scene-shop { padding-bottom: 70px; }
-            #scene-kitchen #recipe-area { min-height: 120px; padding: 6px; }
-            #scene-kitchen #inventory-area { min-height: 100px; }
+            #scene-kitchen #recipe-area { min-height: 60px; max-height: 16vh; padding: 4px 6px; flex: 0 0 auto; }
+            #scene-kitchen #recipe-area h2, #scene-kitchen #recipe-area p { margin: 2px 0; font-size: 0.85rem; }
+            #scene-kitchen #kitchen-area { flex: 0 0 auto; padding: 6px; }
+            #scene-kitchen #kitchen-status-bar { flex-shrink: 0; min-height: 42px; }
+            #scene-kitchen #inventory-area { min-height: 220px; flex: 1 1 0; overflow: hidden; display: flex; flex-direction: column; }
+            #scene-kitchen #inventory-area h2 { margin: 4px 0 2px; font-size: 0.9rem; flex-shrink: 0; }
+            #scene-kitchen #inventory-area .item-list { min-height: 200px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; gap: 8px; padding: 8px; }
             
             .item-list {
                 grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -933,6 +940,37 @@
             .customer-order-bubble { top: -22px; padding: 3px 5px; font-size: 0.7rem; }
             .customer-order-bubble img { height: 18px; }
             .customer-card { width: 95px; padding: 4px; }
+        }
+
+        /* 모바일용 플로팅 네비 (body 직계, overflow 영향 없음) */
+        .floating-nav {
+            position: fixed;
+            bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+            left: 0;
+            right: 0;
+            z-index: 10002;
+            display: flex;
+            justify-content: center;
+            padding: 0 10px;
+            background: rgba(255,255,255,0.98);
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
+            pointer-events: auto;
+        }
+        .floating-nav .btn { font-size: 1rem !important; padding: 10px 24px !important; }
+        @media (min-width: 769px) {
+            .floating-nav { display: none !important; }
+        }
+        @media (max-width: 768px) {
+            body:has(#scene-kitchen.active) #floating-nav-kitchen { display: flex !important; }
+            body:has(#scene-shop.active) #floating-nav-shop { display: flex !important; }
+            #scene-kitchen .nav-btn-container,
+            #scene-shop .nav-btn-container { display: none !important; }
+        }
+        @media (max-height: 600px) {
+            .floating-nav { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+        }
+        @media (max-width: 480px) and (max-height: 600px) {
+            .floating-nav { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
         }
 
         /* 버전 정보 (화면 하단, 모든 씬에서 항상 표시) */
@@ -1069,6 +1107,14 @@
         </div>
     </div>
 
+    <!-- 모바일용 플로팅 네비 버튼 (씬 overflow 영향 없이 항상 표시) -->
+    <div id="floating-nav-kitchen" class="floating-nav" style="display: none;">
+        <button class="btn nav-btn" onclick="switchScene('counter')">🔙 카운터로 복귀</button>
+    </div>
+    <div id="floating-nav-shop" class="floating-nav" style="display: none;">
+        <button class="btn nav-btn" onclick="switchScene('counter')">🔙 나가기</button>
+    </div>
+
     <!-- Math Modal -->
     <div id="math-modal">
         <div class="modal-content">
@@ -1105,7 +1151,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00092</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00093</div>
 
     <script>
         // --- Game Data ---
