@@ -797,7 +797,7 @@
                 max-width: none;
             }
             #scene-kitchen {
-                padding-bottom: 80px;
+                padding-bottom: 75px; /* 플로팅 버튼과 겹치지 않도록 */
                 min-height: auto;
             }
             /* 주방·상점 네비 버튼 - 모바일에서 항상 보이도록 고정 */
@@ -891,6 +891,13 @@
             
             .serving-counter-label { font-size: 0.65rem; }
             .nav-btn { font-size: 0.8rem !important; padding: 6px 10px !important; }
+        }
+        
+        /* 주방 모바일 - 재료 창고 추가 확보 */
+        @media (max-width: 768px) and (max-height: 700px) {
+            #scene-kitchen #recipe-area { max-height: 14vh; }
+            #scene-kitchen #inventory-area { min-height: 240px; }
+            #scene-kitchen #inventory-area .item-list { min-height: 220px; }
         }
         
         /* 높이가 좁은 화면 (세로가 짧은 기기) */
