@@ -678,16 +678,20 @@
                 flex-direction: column;
             }
             #scene-container {
-                overflow-y: auto;
-                overflow-x: hidden;
-                -webkit-overflow-scrolling: touch;
+                overflow: hidden;
                 flex: 1 1 0;
                 min-height: 0;
                 flex-basis: 0;
+                display: flex;
+                flex-direction: column;
             }
             .scene {
-                overflow-y: visible;
-                min-height: fit-content;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y;
+                flex: 1;
+                min-height: 0;
                 padding-bottom: 20px;
             }
             
@@ -798,7 +802,7 @@
             }
             #scene-kitchen {
                 padding-bottom: 75px; /* 플로팅 버튼과 겹치지 않도록 */
-                min-height: auto;
+                min-height: 0; /* flex 자식으로 스크롤 영역 확보 */
             }
             /* 주방·상점 네비 버튼 - 모바일에서 항상 보이도록 고정 */
             #scene-kitchen .nav-btn-container,
@@ -992,8 +996,7 @@
         #version-info {
             position: fixed;
             bottom: 2px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 6px;
             font-size: 0.6rem;
             color: #666;
             opacity: 0.9;
@@ -1166,7 +1169,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00094</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00095</div>
 
     <script>
         // --- Game Data ---
@@ -2144,6 +2147,8 @@
         let currentTouchX = 0;
         let currentTouchY = 0;
         let isDragging = false;
+        let pendingDrag = null; // { target, touchId } - 터치 시작만 하고 아직 드래그 미확정
+        const DRAG_THRESHOLD = 10; // 이 거리 이상 움직여야 드래그로 인식 (그 전엔 스크롤 허용)
         let rAFId = null;
 
         // Highlight Helper
@@ -2175,67 +2180,89 @@
         }
 
         document.addEventListener('touchstart', function(e) {
-            if (isDragging) return; // Ignore multitouch start if already dragging
+            if (isDragging) return;
+            if (pendingDrag) return; // 이미 다른 터치 대기 중
 
             const target = e.target.closest('.draggable-item, .drink-item');
             if (!target) return;
-            // Fix: Check if the target is a button or inside a button (to allow clicks)
             if (e.target.closest('button')) return;
 
-            e.preventDefault(); // Stop scrolling immediately
-            
+            // preventDefault 하지 않음 - 스크롤 허용. touchmove에서 거리 확인 후 드래그 확정 시에만 preventDefault
             const touch = e.changedTouches[0];
-            activeTouchId = touch.identifier;
-            draggingItem = target;
-            isDragging = true;
-            
-            // Store initial positions
-            initialTouchX = touch.clientX;
-            initialTouchY = touch.clientY;
-            currentTouchX = touch.clientX;
-            currentTouchY = touch.clientY;
-            
-            // Create Ghost
-            dragGhost = target.cloneNode(true);
-            dragGhost.classList.add('drag-ghost');
-            
-            // Set initial fixed position to match the original element exactly
-            const rect = target.getBoundingClientRect();
-            dragGhost.style.left = rect.left + 'px';
-            dragGhost.style.top = rect.top + 'px';
-            dragGhost.style.width = rect.width + 'px';
-            dragGhost.style.height = rect.height + 'px';
-            dragGhost.style.margin = '0'; // Reset margins
-            dragGhost.style.transform = 'translate(0, 0)'; // Init transform
-            
-            // Visual Cue
-            highlightDropZones(target.dataset.type, true);
-            
-            document.body.appendChild(dragGhost);
-            
-            // Start animation loop
-            rAFId = requestAnimationFrame(updateGhostPosition);
-            
-        }, { passive: false });
+            pendingDrag = {
+                target: target,
+                touchId: touch.identifier,
+                startX: touch.clientX,
+                startY: touch.clientY
+            };
+        }, { passive: true });
 
         document.addEventListener('touchmove', function(e) {
-            if (!isDragging) return;
-            e.preventDefault(); // Prevent scrolling/zooming
+            if (isDragging) {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeTouchId) {
+                        currentTouchX = e.changedTouches[i].clientX;
+                        currentTouchY = e.changedTouches[i].clientY;
+                        break;
+                    }
+                }
+                return;
+            }
+            if (!pendingDrag) return;
 
             for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === activeTouchId) {
-                    currentTouchX = e.changedTouches[i].clientX;
-                    currentTouchY = e.changedTouches[i].clientY;
+                const t = e.changedTouches[i];
+                if (t.identifier === pendingDrag.touchId) {
+                    const dx = Math.abs(t.clientX - pendingDrag.startX);
+                    const dy = Math.abs(t.clientY - pendingDrag.startY);
+                    if (dx >= DRAG_THRESHOLD || dy >= DRAG_THRESHOLD) {
+                        // 드래그 확정: preventDefault 하고 드래그 시작
+                        e.preventDefault();
+                        const target = pendingDrag.target;
+                        const startX = pendingDrag.startX;
+                        const startY = pendingDrag.startY;
+                        pendingDrag = null;
+                        activeTouchId = t.identifier;
+                        draggingItem = target;
+                        isDragging = true;
+                        initialTouchX = startX;
+                        initialTouchY = startY;
+                        currentTouchX = t.clientX;
+                        currentTouchY = t.clientY;
+
+                        dragGhost = target.cloneNode(true);
+                        dragGhost.classList.add('drag-ghost');
+                        const rect = target.getBoundingClientRect();
+                        dragGhost.style.left = rect.left + 'px';
+                        dragGhost.style.top = rect.top + 'px';
+                        dragGhost.style.width = rect.width + 'px';
+                        dragGhost.style.height = rect.height + 'px';
+                        dragGhost.style.margin = '0';
+                        dragGhost.style.transform = 'translate(0, 0)';
+                        highlightDropZones(target.dataset.type, true);
+                        document.body.appendChild(dragGhost);
+                        rAFId = requestAnimationFrame(updateGhostPosition);
+                    }
                     break;
                 }
             }
         }, { passive: false });
 
         document.addEventListener('touchend', function(e) {
+            if (pendingDrag && !isDragging) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === pendingDrag.touchId) {
+                        pendingDrag = null;
+                        return;
+                    }
+                }
+            }
             handleTouchEnd(e);
         });
         
         document.addEventListener('touchcancel', function(e) {
+            if (pendingDrag && !isDragging) pendingDrag = null;
             handleTouchEnd(e);
         });
 
