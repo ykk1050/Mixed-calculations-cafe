@@ -213,12 +213,33 @@
             display: flex;
             align-items: flex-end; /* Align image to bottom */
             justify-content: center;
+            position: relative;
         }
         
         .customer-img-container img {
             width: 100%;
             height: 100%;
             object-fit: contain; /* Show full image */
+        }
+
+        .anger-emoji {
+            position: absolute;
+            font-size: 1.8rem;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+            animation: angryFloat 1.6s ease-in-out infinite;
+            animation-delay: var(--delay, 0s);
+            z-index: 2;
+        }
+        .anger-emoji.e1 { top: 8%; left: 8%; }
+        .anger-emoji.e2 { top: 2%; right: 10%; }
+        .anger-emoji.e3 { top: 22%; right: -2%; }
+        .anger-emoji.e4 { top: 28%; left: -2%; }
+
+        @keyframes angryFloat {
+            0% { transform: translateY(0) scale(1) rotate(-6deg); opacity: 0.7; }
+            50% { transform: translateY(-10px) scale(1.08) rotate(6deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1) rotate(-6deg); opacity: 0.7; }
         }
 
         .customer-order-bubble {
@@ -371,6 +392,41 @@
             background-color: #f00;
             animation: confetti-fall 3s linear forwards;
             z-index: 9998;
+        }
+
+        .serve-reward-popup {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10002;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transform-origin: center;
+            animation: reward-grow-fade 2.5s ease-out forwards;
+        }
+        .serve-reward-gold,
+        .serve-reward-rep {
+            font-weight: 900;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+            white-space: nowrap;
+        }
+        .serve-reward-gold {
+            color: #ffd54f;
+            font-size: 2rem;
+        }
+        .serve-reward-rep {
+            color: #90caf9;
+            font-size: 1.7rem;
+        }
+        .serve-reward-rep.negative {
+            color: #ff8a80;
+        }
+
+        @keyframes reward-grow-fade {
+            0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translate(-50%, -70%) scale(1.45); opacity: 0; }
         }
 
         @keyframes confetti-fall {
@@ -718,6 +774,23 @@
             flex: 1;
             height: 100%; 
         }
+        .recipe-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 0 0 2px 0;
+        }
+        #recipe-variety-bonus {
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: #fff8e1;
+            color: #5d4037;
+            border: 1px solid #ffcc80;
+            border-radius: 999px;
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
 
         #scene-kitchen #kitchen-area {
             display: flex;
@@ -776,6 +849,27 @@
             height: 32px;
             border-radius: 50%;
             border: 2px solid #ddd;
+        }
+        .mini-customer-avatar {
+            position: relative;
+            width: 32px;
+            height: 32px;
+        }
+        .mini-customer-avatar img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+        .mini-anger-emoji {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 0.95rem;
+            line-height: 1;
+            pointer-events: none;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+            animation: angryFloat 1.3s ease-in-out infinite;
         }
 
         .mini-patience {
@@ -1205,6 +1299,190 @@
             z-index: 10001;
             pointer-events: none;
         }
+        #record-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 12;
+            width: 230px;
+            background: rgba(255, 255, 255, 0.93);
+            border: 2px solid #8d6e63;
+            border-radius: 12px;
+            padding: 8px 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+            font-size: 0.73rem;
+            color: #3e2723;
+            line-height: 1.35;
+        }
+        #record-panel .title {
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        #record-panel .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        #record-panel .row .k {
+            color: #6d4c41;
+        }
+        #record-panel .row .v {
+            font-weight: 700;
+        }
+        #record-reset-btn {
+            width: 100%;
+            margin-top: 7px;
+            padding: 4px 6px;
+            font-size: 0.68rem;
+            border: 1px solid #bcaaa4;
+            border-radius: 8px;
+            background: #fff3e0;
+            color: #5d4037;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        #record-reset-btn:hover {
+            background: #ffe0b2;
+        }
+        #ranking-panel {
+            position: absolute;
+            top: 280px;
+            right: 10px;
+            z-index: 12;
+            width: 230px;
+            background: rgba(255, 255, 255, 0.93);
+            border: 2px solid #607d8b;
+            border-radius: 12px;
+            padding: 8px 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+            font-size: 0.7rem;
+            color: #263238;
+            line-height: 1.3;
+        }
+        #ranking-panel .title {
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        #ranking-list {
+            max-height: 170px;
+            overflow-y: auto;
+            border-top: 1px dashed #b0bec5;
+            margin-top: 6px;
+            padding-top: 6px;
+        }
+        #ranking-metric {
+            width: 100%;
+            margin-top: 6px;
+            border: 1px solid #90a4ae;
+            border-radius: 8px;
+            padding: 4px 6px;
+            font-size: 0.67rem;
+            background: #fafafa;
+        }
+        #my-rank-row {
+            margin-top: 6px;
+            padding: 5px 6px;
+            border-radius: 8px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            font-size: 0.67rem;
+            font-weight: 700;
+            color: #0d47a1;
+        }
+        .ranking-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .ranking-row .nick {
+            max-width: 105px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 700;
+        }
+        .ranking-row .score {
+            font-weight: 700;
+            color: #0d47a1;
+        }
+        #ranking-submit-btn, #ranking-refresh-btn {
+            width: 100%;
+            margin-top: 6px;
+            padding: 4px 6px;
+            font-size: 0.67rem;
+            border: 1px solid #90a4ae;
+            border-radius: 8px;
+            background: #eceff1;
+            color: #263238;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        #ranking-submit-btn:hover, #ranking-refresh-btn:hover {
+            background: #cfd8dc;
+        }
+        #player-nickname-badge {
+            font-size: 0.65rem;
+            color: #455a64;
+            margin-top: 3px;
+            word-break: break-all;
+        }
+        #nickname-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            z-index: 12000;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+        #nickname-modal .panel {
+            background: #fff;
+            border-radius: 14px;
+            border: 3px solid #8d6e63;
+            max-width: 420px;
+            width: 100%;
+            padding: 16px;
+            color: #3e2723;
+        }
+        #nickname-input {
+            width: 100%;
+            font-size: 1rem;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #bcaaa4;
+            margin-top: 8px;
+        }
+        #nickname-help {
+            font-size: 0.75rem;
+            color: #5d4037;
+            margin-top: 8px;
+            line-height: 1.35;
+        }
+        #nickname-submit-btn {
+            margin-top: 10px;
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            #record-panel {
+                width: 170px;
+                font-size: 0.62rem;
+                padding: 6px 8px;
+                top: 6px;
+                right: 6px;
+            }
+            #record-reset-btn {
+                font-size: 0.58rem;
+                padding: 3px 5px;
+            }
+            #ranking-panel {
+                width: 170px;
+                font-size: 0.6rem;
+                top: 250px;
+                right: 6px;
+            }
+        }
 
     </style>
 </head>
@@ -1231,6 +1509,29 @@
         <!-- Scene 1: Counter (Main) -->
         <div id="scene-counter" class="scene active">
             <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">☕ 카페 카운터</h2>
+            <div id="record-panel">
+                <div class="title">🏆 플레이 기록</div>
+                <div id="record-panel-content"></div>
+                <button id="record-reset-btn" onclick="resetPlayerRecords()">기록 초기화</button>
+            </div>
+            <div id="ranking-panel">
+                <div class="title">🌐 글로벌 랭킹</div>
+                <div id="player-nickname-badge">닉네임: (미설정)</div>
+                <select id="ranking-metric" onchange="loadGlobalRanking()">
+                    <option value="score">종합 점수</option>
+                    <option value="bestRep">최고 평판</option>
+                    <option value="bestGold">최고 골드</option>
+                    <option value="maxServedCustomers">최대 서빙 고객수</option>
+                    <option value="bestStreak">최고 연속 정답</option>
+                    <option value="maxCombo">최대 콤보</option>
+                    <option value="accuracy">정답률</option>
+                    <option value="correct">정답 횟수</option>
+                </select>
+                <button id="ranking-submit-btn" onclick="submitGlobalRanking()">현재 기록 랭킹 등록</button>
+                <button id="ranking-refresh-btn" onclick="loadGlobalRanking()">랭킹 새로고침</button>
+                <div id="my-rank-row">내 등수: 확인 중...</div>
+                <div id="ranking-list">랭킹 불러오는 중...</div>
+            </div>
             
             <div class="counter-background-wrapper">
                 <div id="customer-display-area">
@@ -1260,7 +1561,10 @@
             <div id="kitchen-layout">
                 <!-- 왼쪽 열: 레시피 메뉴, 제조대 -->
                 <div id="recipe-area" class="panel kitchen-col-left">
-                        <h2 style="margin: 0 0 2px 0;">📖 레시피 & 메뉴 선택</h2>
+                        <div class="recipe-title-row">
+                            <h2 style="margin: 0;">📖 레시피 & 메뉴 선택</h2>
+                            <span id="recipe-variety-bonus">다양성 보너스 +0G / +0평판</span>
+                        </div>
                         <p style="font-size: 0.8rem; text-align: center; margin: 0 0 5px 0;">만들고 싶은 메뉴를 클릭해서 제조대에 세팅하세요.</p>
                         <div class="item-list" id="upgrade-list">
                             <!-- Generated by JS -->
@@ -1355,6 +1659,18 @@
         </div>
     </div>
 
+    <div id="nickname-modal">
+        <div class="panel">
+            <h3 style="margin:0;">닉네임 설정</h3>
+            <div id="nickname-help">
+                개인정보가 포함되지 않은 닉네임을 입력하세요.<br>
+                닉네임은 한 번 정하면 변경할 수 없습니다.
+            </div>
+            <input id="nickname-input" maxlength="16" placeholder="예: 계산왕_01">
+            <button id="nickname-submit-btn" class="btn" onclick="registerNickname()">시작하기</button>
+        </div>
+    </div>
+
     <!-- Game Over Modal -->
     <div id="game-over-modal">
         <div class="game-over-content">
@@ -1373,7 +1689,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00094</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00096</div>
 
     <script>
         // --- Game Data ---
@@ -1487,6 +1803,10 @@
             combo: 0,
             fever: false,
             feverTime: 0,
+            streaks: {
+                gatherNoMiss: 0, // 재료 구하기 연속 무오답
+                serveNoMiss: 0 // 완벽 제조 후 서빙 연속 무오답
+            },
             
             // New Shop & Upgrade State
             upgrades: {
@@ -1495,10 +1815,21 @@
                 adBoard: false, // 광고판 (손님 방문 속도 증가)
                 autoGather: 0, // 재료 알바 (남은 시간 ms)
                 autoServe: 0, // 서빙 알바 (남은 시간 ms)
+                deliveryWater: false, // 물 정기 배달
+                deliveryWaterLv2: false, // 물 정기 배달 2단계
+                deliveryBean: false, // 원두 정기 배달
+                deliveryBeanLv2: false, // 원두 정기 배달 2단계
+                deliveryMilk: false, // 우유 정기 배달
+                deliveryMilkLv2: false, // 우유 정기 배달 2단계
+                deliveryIce: false, // 얼음 정기 배달
+                deliveryIceLv2: false, // 얼음 정기 배달 2단계
+                deliverySparkling: false, // 탄산수 정기 배달
+                deliverySparklingLv2: false, // 탄산수 정기 배달 2단계
             },
             theme: 'default', // 'default', 'cat', 'space'
             bgm: 'default', // 'default', 'jazz', 'lofi', 'pop'
-            unlockedItems: [] // 구매한 아이템 ID 목록
+            unlockedItems: [], // 구매한 아이템 ID 목록
+            sessionServedCustomers: 0
         };
 
         // Scene Management
@@ -1555,6 +1886,16 @@
             { id: 'candyBasket', name: '사탕 바구니', price: 300, type: 'consumable', desc: '모든 손님 인내심 50% 회복', icon: '🍬' },
             { id: 'staffGather', name: '재료 담당 알바', price: 500, type: 'staff', desc: '3분간 재료 부족 시 자동 채움', icon: '👩‍🌾', duration: 180000 },
             { id: 'staffServe', name: '서빙 담당 알바', price: 800, type: 'staff', desc: '3분간 완성된 음료 자동 서빙', icon: '🏃', duration: 180000 },
+            { id: 'deliveryWater', name: '물 정기배달 1단계', price: 650, type: 'delivery', desc: '영구 효과: 25초마다 물 +2', icon: '🚚💧' },
+            { id: 'deliveryWaterLv2', name: '물 정기배달 2단계', price: 1300, type: 'delivery', requiresUpgrade: 'deliveryWater', desc: '영구 효과: 12초마다 물 +2', icon: '🚚💧⚡' },
+            { id: 'deliveryBean', name: '커피알 정기배달 1단계', price: 900, type: 'delivery', desc: '영구 효과: 25초마다 원두 +2', icon: '🚚☕' },
+            { id: 'deliveryBeanLv2', name: '커피알 정기배달 2단계', price: 1800, type: 'delivery', requiresUpgrade: 'deliveryBean', desc: '영구 효과: 12초마다 원두 +2', icon: '🚚☕⚡' },
+            { id: 'deliveryMilk', name: '우유 정기배달 1단계', price: 850, type: 'delivery', desc: '영구 효과: 25초마다 우유 +2', icon: '🚚🥛' },
+            { id: 'deliveryMilkLv2', name: '우유 정기배달 2단계', price: 1700, type: 'delivery', requiresUpgrade: 'deliveryMilk', desc: '영구 효과: 12초마다 우유 +2', icon: '🚚🥛⚡' },
+            { id: 'deliveryIce', name: '얼음 정기배달 1단계', price: 820, type: 'delivery', desc: '영구 효과: 25초마다 얼음 +2', icon: '🚚🧊' },
+            { id: 'deliveryIceLv2', name: '얼음 정기배달 2단계', price: 1640, type: 'delivery', requiresUpgrade: 'deliveryIce', desc: '영구 효과: 12초마다 얼음 +2', icon: '🚚🧊⚡' },
+            { id: 'deliverySparkling', name: '탄산수 정기배달 1단계', price: 780, type: 'delivery', desc: '영구 효과: 25초마다 탄산수 +2', icon: '🚚✨' },
+            { id: 'deliverySparklingLv2', name: '탄산수 정기배달 2단계', price: 1560, type: 'delivery', requiresUpgrade: 'deliverySparkling', desc: '영구 효과: 12초마다 탄산수 +2', icon: '🚚✨⚡' },
 
             // 3. Themes
             { id: 'theme_cat', name: '고양이 카페', price: 1000, type: 'theme', desc: '야옹~ 고양이 테마 적용', icon: '🐱', themeId: 'cat' },
@@ -1589,6 +1930,378 @@
         let craftingSlots = {}; 
         let finishedDrinks = [];
         const MAX_FINISHED_DRINKS = 10;
+        const REP_GAME_OVER = -25;
+        const REP_WARNING = -10;
+        const PATIENCE_BONUS_SECONDS = 20;
+        const CUSTOMER_GRACE_SECONDS = 45;
+        const GRACE_ENTRY_REP_PENALTY = 1;
+        const LATE_SERVE_REWARD_MULTIPLIER = 0.7;
+        const GATHER_STREAK_EXTRA_ITEM_MAX = 3;
+        const SERVE_STREAK_GOLD_STEP = 6;
+        const DELIVERY_INTERVAL_LEVEL1_SECONDS = 25;
+        const DELIVERY_INTERVAL_LEVEL2_SECONDS = 12;
+        const MENU_UNLOCK_GOLD_STEP = 4; // 해금비용 100당 골드 보너스
+        const MENU_UNLOCK_REP_STEP = 1; // 해금비용 200당 평판 보너스
+        const MENU_VARIETY_GOLD_STEP = 2; // 해금 메뉴 1개당 모든 서빙 보너스
+        const PLAYER_RECORDS_KEY = 'baristaGameRecords';
+        const PLAYER_PROFILE_KEY = 'baristaGameProfile';
+        const RANKING_API_URL = 'https://script.google.com/macros/s/AKfycbxZvG15HENUXyiSWsB0ywW2zP3j7RzxdjlXirwWIAdflkCk0_holScetsws7uEqNv8Gsw/exec'; // TODO: 배포한 Apps Script Web App URL 입력
+        let repWarningShown = false;
+        let rankingNonce = '';
+        let antiCheatSignals = {
+            submitCount: 0,
+            servedActions: 0,
+            answerActions: 0
+        };
+        let playerProfile = {
+            deviceId: '',
+            nickname: ''
+        };
+        let playerRecords = {
+            totalProblems: 0,
+            attempts: 0,
+            correct: 0,
+            wrong: 0,
+            streak: 0,
+            bestStreak: 0,
+            bestRep: 0,
+            maxServedCustomers: 0,
+            bestGold: 0,
+            maxCombo: 0
+        };
+
+        function savePlayerRecords() {
+            localStorage.setItem(PLAYER_RECORDS_KEY, JSON.stringify(playerRecords));
+        }
+
+        function loadPlayerRecords() {
+            const saved = localStorage.getItem(PLAYER_RECORDS_KEY);
+            if (!saved) return;
+            try {
+                const parsed = JSON.parse(saved);
+                playerRecords = { ...playerRecords, ...parsed };
+            } catch (e) {
+                console.warn('Failed to load player records', e);
+            }
+        }
+
+        function loadPlayerProfile() {
+            const saved = localStorage.getItem(PLAYER_PROFILE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    playerProfile = { ...playerProfile, ...parsed };
+                } catch (e) {
+                    console.warn('Failed to load profile', e);
+                }
+            }
+            if (!playerProfile.deviceId) {
+                playerProfile.deviceId = `dev_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+                localStorage.setItem(PLAYER_PROFILE_KEY, JSON.stringify(playerProfile));
+            }
+        }
+
+        function savePlayerProfile() {
+            localStorage.setItem(PLAYER_PROFILE_KEY, JSON.stringify(playerProfile));
+        }
+
+        function normalizeNickname(raw) {
+            return (raw || '').trim().replace(/\s+/g, ' ');
+        }
+
+        function hasPersonalInfoPattern(name) {
+            if (/@/.test(name)) return true; // 이메일 형태
+            if (/\d{3}[- ]?\d{3,4}[- ]?\d{4}/.test(name)) return true; // 전화번호 형태
+            return false;
+        }
+
+        function updateNicknameBadge() {
+            const badge = document.getElementById('player-nickname-badge');
+            if (!badge) return;
+            badge.innerText = `닉네임: ${playerProfile.nickname || '(미설정)'}`;
+        }
+
+        function resetPlayerRecords() {
+            if (!confirm("플레이 기록을 초기화할까요?")) return;
+            playerRecords = {
+                totalProblems: 0,
+                attempts: 0,
+                correct: 0,
+                wrong: 0,
+                streak: 0,
+                bestStreak: 0,
+                bestRep: 0,
+                maxServedCustomers: 0,
+                bestGold: 0,
+                maxCombo: 0
+            };
+            savePlayerRecords();
+            renderRecordPanel();
+            alert("플레이 기록이 초기화되었습니다.");
+        }
+
+        async function hashText(text) {
+            const data = new TextEncoder().encode(text);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function callRankingApi(action, payload = {}) {
+            if (!RANKING_API_URL) throw new Error('RANKING_API_URL이 비어 있습니다.');
+            const body = JSON.stringify({ action, ...payload });
+            const res = await fetch(RANKING_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+        }
+
+        async function ensureRankingNonce() {
+            if (rankingNonce) return rankingNonce;
+            try {
+                const result = await callRankingApi('challenge', { deviceId: playerProfile.deviceId });
+                rankingNonce = result.nonce || '';
+            } catch (e) {
+                console.warn('challenge failed', e);
+            }
+            return rankingNonce;
+        }
+
+        async function registerNickname() {
+            const input = document.getElementById('nickname-input');
+            const nickname = normalizeNickname(input ? input.value : '');
+            if (!nickname || nickname.length < 2 || nickname.length > 16) {
+                alert('닉네임은 2~16자로 입력해주세요.');
+                return;
+            }
+            if (!/^[a-zA-Z0-9가-힣_]+$/.test(nickname)) {
+                alert('닉네임은 한글/영문/숫자/밑줄(_)만 사용할 수 있습니다.');
+                return;
+            }
+            if (hasPersonalInfoPattern(nickname)) {
+                alert('이메일/전화번호 등 개인정보 형태는 닉네임으로 사용할 수 없습니다.');
+                return;
+            }
+            try {
+                await ensureRankingNonce();
+                const result = await callRankingApi('registerNickname', {
+                    deviceId: playerProfile.deviceId,
+                    nickname
+                });
+                if (!result.ok) {
+                    alert(result.message || '닉네임 등록에 실패했습니다.');
+                    return;
+                }
+                playerProfile.nickname = nickname;
+                savePlayerProfile();
+                updateNicknameBadge();
+                const modal = document.getElementById('nickname-modal');
+                if (modal) modal.style.display = 'none';
+                loadGlobalRanking();
+            } catch (e) {
+                alert(`닉네임 등록 실패: ${e.message}`);
+            }
+        }
+
+        function ensureNicknameModal() {
+            updateNicknameBadge();
+            if (!playerProfile.nickname) {
+                const modal = document.getElementById('nickname-modal');
+                if (modal) modal.style.display = 'flex';
+            }
+        }
+
+        function getSelectedRankingMetric() {
+            const sel = document.getElementById('ranking-metric');
+            return sel ? sel.value : 'score';
+        }
+
+        function formatRankingValue(metric, row) {
+            const value = row[metric] !== undefined ? row[metric] : row.score;
+            if (metric === 'accuracy') return `${Number(value || 0).toFixed(1)}%`;
+            if (metric === 'bestGold' || metric === 'score') return `${Math.floor(Number(value || 0))}`;
+            return `${Math.floor(Number(value || 0))}`;
+        }
+
+        function renderMyRank(metric, rank, value) {
+            const el = document.getElementById('my-rank-row');
+            if (!el) return;
+            if (!playerProfile.nickname) {
+                el.innerText = '내 등수: 닉네임 등록 필요';
+                return;
+            }
+            if (!rank || rank <= 0) {
+                el.innerText = `내 등수: 집계 대기 (${metric})`;
+                return;
+            }
+            el.innerText = `내 등수: ${rank}위 / 값: ${formatRankingValue(metric, { [metric]: value, score: value })}`;
+        }
+
+        async function loadGlobalRanking() {
+            const list = document.getElementById('ranking-list');
+            if (!list) return;
+            const metric = getSelectedRankingMetric();
+            if (!RANKING_API_URL) {
+                list.innerText = '랭킹 서버 URL이 설정되지 않았습니다.';
+                renderMyRank(metric, 0, 0);
+                return;
+            }
+            list.innerText = '랭킹 불러오는 중...';
+            try {
+                const result = await callRankingApi('getRanking', {
+                    metric,
+                    limit: 100,
+                    nickname: playerProfile.nickname,
+                    deviceId: playerProfile.deviceId
+                });
+                const rows = Array.isArray(result.rows) ? result.rows : [];
+                if (rows.length === 0) {
+                    list.innerText = '아직 등록된 랭킹이 없습니다.';
+                    renderMyRank(metric, result.myRank || 0, result.myValue || 0);
+                    return;
+                }
+                list.innerHTML = rows.map((r, idx) => `
+                    <div class="ranking-row">
+                        <span class="nick">${idx + 1}. ${r.nickname}</span>
+                        <span class="score">${formatRankingValue(metric, r)}</span>
+                    </div>
+                `).join('');
+
+                let myRank = result.myRank || 0;
+                let myValue = result.myValue || 0;
+
+                if (!myRank && playerProfile.nickname) {
+                    const localIdx = rows.findIndex(r => r.nickname === playerProfile.nickname);
+                    if (localIdx !== -1) {
+                        myRank = localIdx + 1;
+                        myValue = rows[localIdx][metric] !== undefined ? rows[localIdx][metric] : rows[localIdx].score;
+                    }
+                }
+
+                if (!myRank && playerProfile.nickname) {
+                    try {
+                        const mine = await callRankingApi('getMyRank', {
+                            metric,
+                            nickname: playerProfile.nickname,
+                            deviceId: playerProfile.deviceId
+                        });
+                        if (mine && mine.rank) {
+                            myRank = mine.rank;
+                            myValue = mine.value;
+                        }
+                    } catch (e) {
+                        // 서버가 getMyRank를 지원하지 않는 경우 무시
+                    }
+                }
+                renderMyRank(metric, myRank, myValue);
+            } catch (e) {
+                list.innerText = `랭킹 로드 실패: ${e.message}`;
+                renderMyRank(metric, 0, 0);
+            }
+        }
+
+        async function submitGlobalRanking() {
+            if (!playerProfile.nickname) {
+                alert('먼저 닉네임을 등록해주세요.');
+                ensureNicknameModal();
+                return;
+            }
+            if (!RANKING_API_URL) {
+                alert('RANKING_API_URL을 먼저 설정해주세요.');
+                return;
+            }
+            antiCheatSignals.submitCount++;
+            const accuracy = playerRecords.attempts > 0 ? (playerRecords.correct / playerRecords.attempts) * 100 : 0;
+            const payload = {
+                deviceId: playerProfile.deviceId,
+                nickname: playerProfile.nickname,
+                records: {
+                    ...playerRecords,
+                    accuracy: Number(accuracy.toFixed(2)),
+                    playSeconds: gameTime,
+                    servedActions: antiCheatSignals.servedActions,
+                    answerActions: antiCheatSignals.answerActions
+                }
+            };
+            // NOTE: 완전한 클라이언트 보안은 불가능. nonce + 서버 검증과 함께 사용.
+            const nonce = await ensureRankingNonce();
+            payload.nonce = nonce;
+            payload.proof = await hashText(JSON.stringify(payload.records) + '|' + payload.deviceId + '|' + nonce);
+            try {
+                const result = await callRankingApi('submitRanking', payload);
+                if (!result.ok) {
+                    alert(result.message || '랭킹 등록 실패');
+                    return;
+                }
+                rankingNonce = ''; // nonce 1회성 사용
+                alert('랭킹이 등록되었습니다!');
+                loadGlobalRanking();
+            } catch (e) {
+                alert(`랭킹 등록 오류: ${e.message}`);
+            }
+        }
+
+        function refreshBestRecords() {
+            let changed = false;
+            if (state.rep > playerRecords.bestRep) {
+                playerRecords.bestRep = state.rep;
+                changed = true;
+            }
+            if (state.gold > playerRecords.bestGold) {
+                playerRecords.bestGold = state.gold;
+                changed = true;
+            }
+            if (state.combo > playerRecords.maxCombo) {
+                playerRecords.maxCombo = state.combo;
+                changed = true;
+            }
+            if ((state.sessionServedCustomers || 0) > playerRecords.maxServedCustomers) {
+                playerRecords.maxServedCustomers = state.sessionServedCustomers || 0;
+                changed = true;
+            }
+            if (playerRecords.streak > playerRecords.bestStreak) {
+                playerRecords.bestStreak = playerRecords.streak;
+                changed = true;
+            }
+            if (changed) savePlayerRecords();
+        }
+
+        function renderRecordPanel() {
+            const el = document.getElementById('record-panel-content');
+            if (!el) return;
+            const accuracy = playerRecords.attempts > 0
+                ? ((playerRecords.correct / playerRecords.attempts) * 100).toFixed(1)
+                : '0.0';
+            el.innerHTML = `
+                <div class="row"><span class="k">총 문제 수</span><span class="v">${playerRecords.totalProblems}</span></div>
+                <div class="row"><span class="k">풀이 시도</span><span class="v">${playerRecords.attempts}</span></div>
+                <div class="row"><span class="k">정답 / 오답</span><span class="v">${playerRecords.correct} / ${playerRecords.wrong}</span></div>
+                <div class="row"><span class="k">연속 정답</span><span class="v">${playerRecords.streak}</span></div>
+                <div class="row"><span class="k">최고 연속 정답</span><span class="v">${playerRecords.bestStreak}</span></div>
+                <div class="row"><span class="k">정답률</span><span class="v">${accuracy}%</span></div>
+                <div class="row"><span class="k">최고 평판</span><span class="v">${playerRecords.bestRep}</span></div>
+                <div class="row"><span class="k">최대 서빙 고객수</span><span class="v">${playerRecords.maxServedCustomers}</span></div>
+                <div class="row"><span class="k">최고 골드</span><span class="v">${playerRecords.bestGold}G</span></div>
+                <div class="row"><span class="k">최대 콤보</span><span class="v">${playerRecords.maxCombo}</span></div>
+            `;
+        }
+
+        function checkReputation() {
+            if (state.rep <= REP_GAME_OVER) {
+                gameOver();
+                return;
+            }
+            if (state.rep <= REP_WARNING) {
+                if (!repWarningShown) {
+                    repWarningShown = true;
+                    alert(`⚠️ 평판이 위험 수준입니다! (${state.rep})\n평판이 ${REP_GAME_OVER} 이하가 되면 게임 오버됩니다.`);
+                }
+            } else {
+                repWarningShown = false;
+            }
+        }
 
         // --- Math Engine ---
         function getRandomInt(min, max) {
@@ -1725,7 +2438,8 @@
                     let result = eval(expression);
 
                     if (Number.isInteger(result) && result >= 0 && result <= 100) {
-                        if (expression.includes('/') && !validateStrictMath(expression)) continue;
+                        // Reject any expression that creates negative intermediate steps.
+                        if (!validateStrictMath(expression)) continue;
                         answer = result;
                         displayExp = expression.replace(/\*/g, '×').replace(/\//g, '÷');
                         break;
@@ -1741,6 +2455,9 @@
         function updateUI() {
             document.getElementById('gold-display').innerText = state.gold;
             document.getElementById('rep-display').innerText = state.rep;
+            refreshBestRecords();
+            renderRecordPanel();
+            updateNicknameBadge();
             
             updateComboUI();
             
@@ -1767,6 +2484,9 @@
             list.innerHTML = '';
             
             shopItems.forEach(item => {
+                if (item.type === 'delivery' && item.requiresUpgrade && !state.upgrades[item.requiresUpgrade]) {
+                    return; // 1단계를 구매해야 2단계 노출
+                }
                 const div = document.createElement('div');
                 div.className = 'shop-item';
                 
@@ -1808,6 +2528,12 @@
                         const timeLeft = Math.ceil(state.upgrades[item.id] / 1000);
                         btnText = `${timeLeft}초 남음`;
                         btnDisabled = true;
+                    }
+                } else if (item.type === 'delivery') {
+                    if (state.upgrades[item.id]) {
+                        btnText = "보유중";
+                        btnDisabled = true;
+                        isOwned = true;
                     }
                 }
 
@@ -1853,6 +2579,15 @@
                 } else if (item.type === 'staff') {
                     state.upgrades[item.id] = item.duration;
                     alert(`${item.name} 고용 완료! 3분간 열심히 일합니다.`);
+                } else if (item.type === 'delivery') {
+                    if (item.requiresUpgrade && !state.upgrades[item.requiresUpgrade]) {
+                        alert("먼저 1단계를 구매해야 합니다.");
+                        state.gold += item.price; // revert payment for invalid purchase path
+                        updateUI();
+                        return;
+                    }
+                    state.upgrades[item.id] = true;
+                    alert(`${item.name} 구매 완료! 정기 배달이 영구적으로 시작됩니다.`);
                 } else if (item.type === 'theme') {
                     state.unlockedItems.push(item.id);
                     applyTheme(item.themeId);
@@ -1980,6 +2715,22 @@
             });
         }
 
+        function getVarietyServeBonus() {
+            const unlockedCount = recipes.filter(r => r.unlocked).length;
+            const varietyTier = Math.max(0, unlockedCount - 3); // 기본 3메뉴 제외
+            return {
+                gold: Math.min(40, varietyTier * MENU_VARIETY_GOLD_STEP),
+                rep: Math.min(5, Math.floor(varietyTier / 3))
+            };
+        }
+
+        function renderRecipeVarietyBonus() {
+            const bonusEl = document.getElementById('recipe-variety-bonus');
+            if (!bonusEl) return;
+            const bonus = getVarietyServeBonus();
+            bonusEl.innerText = `다양성 보너스 +${bonus.gold}G / +${bonus.rep}평판`;
+        }
+
         function renderRecipes() {
             const list = document.getElementById('upgrade-list');
             if (!list) return;
@@ -2008,6 +2759,7 @@
                 }
                 list.appendChild(div);
             });
+            renderRecipeVarietyBonus();
         }
 
         function renderCraftingTable() {
@@ -2123,9 +2875,15 @@
 
             state.customers.forEach((customer, index) => {
                 const recipe = recipes.find(r => r.id === customer.orderId);
-                const patiencePct = (customer.currentPatience / customer.maxPatience) * 100;
+                const isInGrace = customer.currentPatience <= 0;
+                const graceMax = customer.maxGrace || CUSTOMER_GRACE_SECONDS;
+                const visibleRatio = isInGrace
+                    ? Math.max(0, (customer.graceLeft || 0) / graceMax)
+                    : Math.max(0, customer.currentPatience / customer.maxPatience);
+                const patiencePct = Math.min(100, visibleRatio * 100);
                 let barColor = '#4caf50';
-                if (patiencePct < 30) barColor = '#f44336';
+                if (isInGrace) barColor = '#8e24aa';
+                else if (patiencePct < 30) barColor = '#f44336';
                 else if (patiencePct < 60) barColor = '#ff9800';
 
                 const div = document.createElement('div');
@@ -2149,8 +2907,17 @@
                     </div>
                     <div class="customer-img-container">
                         <img src="${customerImg}" alt="Customer">
+                        ${isInGrace ? `
+                            <span class="anger-emoji e1" style="--delay:0s;">😡</span>
+                            <span class="anger-emoji e2" style="--delay:0.25s;">💢</span>
+                            <span class="anger-emoji e3" style="--delay:0.5s;">😠</span>
+                            <span class="anger-emoji e4" style="--delay:0.75s;">💢</span>
+                        ` : ''}
                     </div>
                     <div class="customer-name">${customer.name}</div>
+                    <div style="font-size:0.7rem; color:${isInGrace ? '#8e24aa' : '#555'};">
+                        ${isInGrace ? `추가 대기 중 (${Math.max(0, customer.graceLeft || 0)}초)` : ''}
+                    </div>
                     <div class="patience-bar-container">
                         <div class="patience-bar" style="width:${patiencePct}%; background-color:${barColor};"></div>
                     </div>
@@ -2170,9 +2937,15 @@
             }
 
             state.customers.forEach(customer => {
-                const patiencePct = (customer.currentPatience / customer.maxPatience) * 100;
+                const isInGrace = customer.currentPatience <= 0;
+                const graceMax = customer.maxGrace || CUSTOMER_GRACE_SECONDS;
+                const visibleRatio = isInGrace
+                    ? Math.max(0, (customer.graceLeft || 0) / graceMax)
+                    : Math.max(0, customer.currentPatience / customer.maxPatience);
+                const patiencePct = Math.min(100, visibleRatio * 100);
                 let barColor = '#4caf50';
-                if (patiencePct < 30) barColor = '#f44336';
+                if (isInGrace) barColor = '#8e24aa';
+                else if (patiencePct < 30) barColor = '#f44336';
                 else if (patiencePct < 60) barColor = '#ff9800';
                 
                 let customerImg = customer.img || 'customer.png';
@@ -2183,7 +2956,10 @@
                 const div = document.createElement('div');
                 div.className = 'mini-customer';
                 div.innerHTML = `
-                    <img src="${customerImg}" alt="C">
+                    <div class="mini-customer-avatar">
+                        <img src="${customerImg}" alt="C">
+                        ${isInGrace ? '<span class="mini-anger-emoji">😡</span>' : ''}
+                    </div>
                     <div style="font-size:0.6rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center; max-width:38px;">${recipe.name}</div>
                     <div class="mini-patience">
                         <div class="mini-patience-bar" style="width:${patiencePct}%; background-color:${barColor};"></div>
@@ -2260,6 +3036,28 @@
                 document.body.appendChild(confetti);
                 setTimeout(() => document.body.removeChild(confetti), 5000);
             }
+        }
+
+        function showServeRewardPopup(x, y, reward, repChange) {
+            const popup = document.createElement('div');
+            popup.className = 'serve-reward-popup';
+            popup.style.left = `${x}px`;
+            popup.style.top = `${y}px`;
+
+            const goldEl = document.createElement('div');
+            goldEl.className = 'serve-reward-gold';
+            goldEl.innerText = `${reward >= 0 ? '+' : ''}${reward}G`;
+
+            const repEl = document.createElement('div');
+            repEl.className = `serve-reward-rep${repChange < 0 ? ' negative' : ''}`;
+            repEl.innerText = `${repChange >= 0 ? '+' : ''}${repChange} 평판`;
+
+            popup.appendChild(goldEl);
+            popup.appendChild(repEl);
+            document.body.appendChild(popup);
+            setTimeout(() => {
+                if (popup.parentNode) popup.parentNode.removeChild(popup);
+            }, 2600);
         }
 
         // --- Drag & Drop (Mouse) ---
@@ -2789,6 +3587,9 @@
         function serveCustomer(index, quality, drinkIndex) {
             const customer = state.customers[index];
             const recipe = recipes.find(r => r.id === customer.orderId);
+            const isLateServe = customer.currentPatience <= 0;
+            const waitedSeconds = Math.floor((Date.now() - customer.time) / 1000);
+            const customerCardEl = document.querySelector(`.customer-card[data-index="${index}"]`);
             
             let reward = recipe.price;
             let repChange = 0;
@@ -2826,12 +3627,76 @@
                 msg = "으악! 음식물 쓰레기를 서빙했습니다! 손님이 화를 냅니다.";
             }
 
+            if (quality !== 'F' && isLateServe) {
+                reward = Math.floor(reward * LATE_SERVE_REWARD_MULTIPLIER);
+                repChange -= 2;
+                msg += " (늦은 서빙: 보상 감소)";
+            } else if (quality !== 'F') {
+                if (waitedSeconds <= 12) {
+                    reward = Math.floor(reward * 1.25);
+                    repChange += 2;
+                    msg += " (초고속 서빙 보너스!)";
+                } else if (waitedSeconds <= 20) {
+                    reward = Math.floor(reward * 1.1);
+                    repChange += 1;
+                    msg += " (빠른 서빙 보너스)";
+                }
+            }
+
+            if (quality !== 'F') {
+                // 1) 비싼 메뉴일수록(해금비용↑) 개별 서빙 보너스
+                const unlockTier = Math.min(8, Math.floor((recipe.unlockCost || 0) / 100));
+                if (unlockTier > 0) {
+                    const unlockGoldBonus = unlockTier * MENU_UNLOCK_GOLD_STEP;
+                    const unlockRepBonus = Math.floor(unlockTier / 2) * MENU_UNLOCK_REP_STEP;
+                    reward += unlockGoldBonus;
+                    repChange += unlockRepBonus;
+                    msg += ` (고급 메뉴 보너스 +${unlockGoldBonus}G${unlockRepBonus > 0 ? `, +${unlockRepBonus}평판` : ''})`;
+                }
+
+                // 2) 메뉴 다양성 보너스: 해금 메뉴가 많을수록 모든 서빙 보너스
+                const varietyBonus = getVarietyServeBonus();
+                if (varietyBonus.gold > 0 || varietyBonus.rep > 0) {
+                    const varietyGoldBonus = varietyBonus.gold;
+                    const varietyRepBonus = varietyBonus.rep;
+                    reward += varietyGoldBonus;
+                    repChange += varietyRepBonus;
+                    msg += ` (메뉴 다양성 보너스 +${varietyGoldBonus}G${varietyRepBonus > 0 ? `, +${varietyRepBonus}평판` : ''})`;
+                }
+            }
+
+            if (quality === 'S') {
+                state.streaks.serveNoMiss++;
+                if (state.streaks.serveNoMiss >= 2) {
+                    const streakTier = Math.min(5, state.streaks.serveNoMiss - 1);
+                    const streakGoldBonus = streakTier * SERVE_STREAK_GOLD_STEP;
+                    const streakRepBonus = Math.min(4, Math.floor(state.streaks.serveNoMiss / 2));
+                    reward += streakGoldBonus;
+                    repChange += streakRepBonus;
+                    msg += ` (연속 무오답 서빙 보너스 +${streakGoldBonus}G, +${streakRepBonus}평판)`;
+                }
+            } else {
+                state.streaks.serveNoMiss = 0;
+            }
+
             if (state.fever) msg += " (FEVER x2)";
 
             // alert(msg); // Removed alert for smoother gameplay with effects
 
             state.gold += reward;
             state.rep += repChange;
+            if (quality !== 'F') {
+                state.sessionServedCustomers = (state.sessionServedCustomers || 0) + 1;
+            }
+            antiCheatSignals.servedActions++;
+            checkReputation();
+            if (isGameOver) return;
+
+            if (customerCardEl) {
+                const rect = customerCardEl.getBoundingClientRect();
+                showServeRewardPopup(rect.left + rect.width / 2, rect.top + rect.height / 2, reward, repChange);
+            }
+            
             state.customers.splice(index, 1);
             
             // 제조대에서 해당 음료 제거
@@ -2855,6 +3720,8 @@
         // --- Modal & Logic ---
         function openModal(problem, title) {
             currentProblem = problem;
+            playerRecords.totalProblems++;
+            savePlayerRecords();
             document.getElementById('modal-title').innerText = title;
             document.getElementById('problem-display').innerText = problem.expression;
             document.getElementById('answer-input').value = '';
@@ -2874,8 +3741,16 @@
 
             const input = parseInt(document.getElementById('answer-input').value);
             const msgBox = document.getElementById('result-msg');
+            playerRecords.attempts++;
+            antiCheatSignals.answerActions++;
 
             if (input === currentProblem.answer) {
+                playerRecords.correct++;
+                playerRecords.streak++;
+                if (playerRecords.streak > playerRecords.bestStreak) {
+                    playerRecords.bestStreak = playerRecords.streak;
+                }
+                savePlayerRecords();
                 msgBox.innerText = "정답입니다! ⭕";
                 msgBox.className = "result-message correct";
                 
@@ -2892,11 +3767,19 @@
                     closeModal();
                 }, 1000);
             } else {
+                playerRecords.wrong++;
+                playerRecords.streak = 0;
+                savePlayerRecords();
                 // Break Combo
                 state.combo = 0;
                 endFever();
 
                 currentAttempts++;
+                if (currentAction && currentAction.type === 'gather') {
+                    state.streaks.gatherNoMiss = 0;
+                } else if (currentAction && currentAction.type === 'craft') {
+                    state.streaks.serveNoMiss = 0;
+                }
                 if (currentAction.type === 'craft') {
                     if (currentAttempts >= 3) {
                         msgBox.innerText = "3번 틀렸습니다... 제조 실패! 😱";
@@ -2948,7 +3831,17 @@
 
         function handleSuccess() {
             if (currentAction.type === 'gather') {
-                state.inventory[currentAction.itemId]++;
+                let gatherAmount = 1;
+                if (currentAttempts === 0) {
+                    state.streaks.gatherNoMiss++;
+                    if (state.streaks.gatherNoMiss >= 2) {
+                        const streakTier = Math.min(5, state.streaks.gatherNoMiss - 1);
+                        gatherAmount += Math.min(GATHER_STREAK_EXTRA_ITEM_MAX, Math.ceil(streakTier / 2));
+                    }
+                } else {
+                    state.streaks.gatherNoMiss = 0;
+                }
+                state.inventory[currentAction.itemId] += gatherAmount;
                 state.rep += 1;
             } else if (currentAction.type === 'craft') {
                 let quality = 'B';
@@ -2979,6 +3872,7 @@
 
         function handleFailure() {
             if (currentAction.type === 'craft') {
+                state.streaks.serveNoMiss = 0;
                 finishedDrinks.push({
                     recipeId: currentAction.recipeId,
                     quality: 'F' 
@@ -3105,9 +3999,39 @@
                     
                     // Restore State (Merge to keep new fields)
                     state = { ...state, ...data.state };
+                    if (Array.isArray(state.customers)) {
+                        state.customers = state.customers.map(c => {
+                            const maxPatience = Math.max(1, c.maxPatience || (30 + PATIENCE_BONUS_SECONDS));
+                            const currentPatience = typeof c.currentPatience === 'number'
+                                ? Math.max(0, c.currentPatience)
+                                : maxPatience;
+                            return {
+                                ...c,
+                                maxPatience,
+                                currentPatience,
+                                graceLeft: typeof c.graceLeft === 'number' ? c.graceLeft : CUSTOMER_GRACE_SECONDS,
+                                maxGrace: typeof c.maxGrace === 'number' ? c.maxGrace : CUSTOMER_GRACE_SECONDS,
+                                time: c.time || Date.now()
+                            };
+                        });
+                    }
                     
                     // Ensure upgrades object exists if loading old save
-                    if (!state.upgrades) state.upgrades = { autoWhisk: false, premiumMachine: false, adBoard: false, autoGather: 0, autoServe: 0 };
+                    if (!state.upgrades) state.upgrades = { autoWhisk: false, premiumMachine: false, adBoard: false, autoGather: 0, autoServe: 0, deliveryWater: false, deliveryWaterLv2: false, deliveryBean: false, deliveryBeanLv2: false, deliveryMilk: false, deliveryMilkLv2: false, deliveryIce: false, deliveryIceLv2: false, deliverySparkling: false, deliverySparklingLv2: false };
+                    if (typeof state.upgrades.deliveryWater !== 'boolean') state.upgrades.deliveryWater = false;
+                    if (typeof state.upgrades.deliveryWaterLv2 !== 'boolean') state.upgrades.deliveryWaterLv2 = false;
+                    if (typeof state.upgrades.deliveryBean !== 'boolean') state.upgrades.deliveryBean = false;
+                    if (typeof state.upgrades.deliveryBeanLv2 !== 'boolean') state.upgrades.deliveryBeanLv2 = false;
+                    if (typeof state.upgrades.deliveryMilk !== 'boolean') state.upgrades.deliveryMilk = false;
+                    if (typeof state.upgrades.deliveryMilkLv2 !== 'boolean') state.upgrades.deliveryMilkLv2 = false;
+                    if (typeof state.upgrades.deliveryIce !== 'boolean') state.upgrades.deliveryIce = false;
+                    if (typeof state.upgrades.deliveryIceLv2 !== 'boolean') state.upgrades.deliveryIceLv2 = false;
+                    if (typeof state.upgrades.deliverySparkling !== 'boolean') state.upgrades.deliverySparkling = false;
+                    if (typeof state.upgrades.deliverySparklingLv2 !== 'boolean') state.upgrades.deliverySparklingLv2 = false;
+                    if (typeof state.sessionServedCustomers !== 'number') state.sessionServedCustomers = 0;
+                    if (!state.streaks) state.streaks = { gatherNoMiss: 0, serveNoMiss: 0 };
+                    if (typeof state.streaks.gatherNoMiss !== 'number') state.streaks.gatherNoMiss = 0;
+                    if (typeof state.streaks.serveNoMiss !== 'number') state.streaks.serveNoMiss = 0;
                     if (!state.unlockedItems) state.unlockedItems = [];
                     if (!state.theme) state.theme = 'default';
                     if (!state.bgm) state.bgm = 'default';
@@ -3139,6 +4063,7 @@
                     finishedDrinks = Array.isArray(data.finishedDrinks) ? data.finishedDrinks : (data.finishedDrink ? [data.finishedDrink] : []);
                     gameTime = data.gameTime || 0;
                     
+                    checkReputation();
                     updateUI();
                     return true;
                 } catch (e) {
@@ -3173,7 +4098,7 @@
                         // Random customer image
                         const randomImg = customerImages[Math.floor(Math.random() * customerImages.length)];
                         
-                        const patience = 30 + getRandomInt(0, 30);
+                        const patience = 30 + getRandomInt(0, 30) + PATIENCE_BONUS_SECONDS;
     
                         state.customers.push({ 
                             orderId: randomRecipe.id, 
@@ -3181,7 +4106,9 @@
                             img: randomImg,
                             time: Date.now(),
                             maxPatience: patience,
-                            currentPatience: patience
+                            currentPatience: patience,
+                            graceLeft: CUSTOMER_GRACE_SECONDS,
+                            maxGrace: CUSTOMER_GRACE_SECONDS
                         });
                         lastCustomerSpawnTime = gameTime;
                         updateUI();
@@ -3215,15 +4142,60 @@
                 }
             }
 
+            // Permanent scheduled deliveries (Lv2 has shorter cooldown)
+            if (state.upgrades.deliveryWaterLv2) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.water = (state.inventory.water || 0) + 2;
+            } else if (state.upgrades.deliveryWater) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.water = (state.inventory.water || 0) + 2;
+            }
+
+            if (state.upgrades.deliveryBeanLv2) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.bean = (state.inventory.bean || 0) + 2;
+            } else if (state.upgrades.deliveryBean) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.bean = (state.inventory.bean || 0) + 2;
+            }
+
+            if (state.upgrades.deliveryMilkLv2) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.milk = (state.inventory.milk || 0) + 2;
+            } else if (state.upgrades.deliveryMilk) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.milk = (state.inventory.milk || 0) + 2;
+            }
+
+            if (state.upgrades.deliveryIceLv2) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.ice = (state.inventory.ice || 0) + 2;
+            } else if (state.upgrades.deliveryIce) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.ice = (state.inventory.ice || 0) + 2;
+            }
+
+            if (state.upgrades.deliverySparklingLv2) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.sparkling = (state.inventory.sparkling || 0) + 2;
+            } else if (state.upgrades.deliverySparkling) {
+                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.sparkling = (state.inventory.sparkling || 0) + 2;
+            }
+
             // Update Patience (Paused in Shop)
             if (!currentProblem && currentScene !== 'shop') {
                 for (let i = state.customers.length - 1; i >= 0; i--) {
                     const c = state.customers[i];
-                    c.currentPatience--;
-                    if (c.currentPatience <= 0) {
-                        state.customers.splice(i, 1);
-                        state.rep -= 5;
-                        updateUI();
+                    if (typeof c.graceLeft !== 'number') c.graceLeft = CUSTOMER_GRACE_SECONDS;
+                    if (typeof c.maxGrace !== 'number') c.maxGrace = CUSTOMER_GRACE_SECONDS;
+
+                    if (c.currentPatience > 0) {
+                        c.currentPatience--;
+                        if (c.currentPatience <= 0) {
+                            c.currentPatience = 0;
+                            state.rep -= GRACE_ENTRY_REP_PENALTY;
+                            checkReputation();
+                            if (isGameOver) return;
+                        }
+                    } else {
+                        c.graceLeft--;
+                        if (c.graceLeft <= 0) {
+                            state.customers.splice(i, 1);
+                            state.rep -= 5;
+                            checkReputation();
+                            if (isGameOver) return;
+                        }
                     }
                 }
             }
@@ -3233,10 +4205,14 @@
         }, 1000); 
 
         // Start Game
+        loadPlayerRecords();
+        loadPlayerProfile();
+        ensureNicknameModal();
         if (!loadGame()) {
             startLevel(1);
         }
         updateUI();
+        loadGlobalRanking();
 
         window.addEventListener('beforeunload', () => {
             saveGame();
