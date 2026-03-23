@@ -1280,12 +1280,19 @@
         }
         .floating-nav .btn { font-size: 1rem !important; padding: 10px 24px !important; }
         #floating-nav-kitchen { display: none !important; }
-        @media (min-width: 769px) {
+        #floating-nav-shop {
+            top: auto;
+            bottom: max(12px, env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            padding: 10px 16px;
+        }
+        @media (min-width: 1025px) {
             #floating-nav-shop { display: none !important; }
         }
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             body:has(#scene-shop.active) #floating-nav-shop,
             body.scene-shop #floating-nav-shop { display: flex !important; visibility: visible !important; }
+            #scene-shop .nav-btn-container { display: none; }
         }
 
         /* 버전 정보 (화면 하단, 모든 씬에서 항상 표시) */
@@ -1681,15 +1688,9 @@
         </div>
     </div>
 
-    <!-- Cheat Controls -->
-    <div style="position: fixed; bottom: 10px; right: 10px; opacity: 0.8; z-index: 9000; display: flex; gap: 5px;">
-        <button class="btn" onclick="cheatAddGold()" style="background: #ffd700; color: #000; border: 1px solid #daa520;">💰 +2만G</button>
-        <button class="btn" onclick="cheatAddIngredients()" style="background: #81c784; color: #000; border: 1px solid #388e3c;">📦 재료 +10</button>
-    </div>
-
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00096</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00097</div>
 
     <script>
         // --- Game Data ---
@@ -3959,21 +3960,6 @@
         function restartGame() {
             localStorage.removeItem('baristaGameSave');
             location.reload();
-        }
-
-        // --- Cheats ---
-        function cheatAddGold() {
-            state.gold += 20000;
-            updateUI();
-            alert("치트 사용: 골드 20,000G 추가됨!");
-        }
-
-        function cheatAddIngredients() {
-            for (const key in state.inventory) {
-                state.inventory[key] += 10;
-            }
-            updateUI();
-            alert("치트 사용: 모든 재료 10개씩 추가됨!");
         }
 
         // --- Modal & Logic ---
