@@ -1690,7 +1690,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00097</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00098</div>
 
     <script>
         // --- Game Data ---
@@ -2358,7 +2358,7 @@
                     }
                     else if (token === '*') evalStack.push(a * b);
                     else if (token === '/') {
-                        if (b === 0 || a % b !== 0) return false;
+                        if (a === 0 || b === 0 || a % b !== 0) return false;
                         evalStack.push(a / b);
                     }
                 }
