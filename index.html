@@ -607,10 +607,14 @@
             pointer-events: auto;
         }
         .draggable-item, .slot {
-            touch-action: manipulation;
+            touch-action: none;
             -webkit-tap-highlight-color: transparent;
         }
-        .draggable-item {
+        .drink-item {
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .draggable-item, .drink-item {
             -webkit-user-select: none;
             user-select: none;
         }
@@ -1763,7 +1767,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.001</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.0011</div>
 
     <script>
         // --- Game Data ---
@@ -3511,6 +3515,7 @@
             highlightDropZones(target.dataset.type, true);
             target.classList.add('dragging-source');
             document.body.classList.add('dragging-active');
+            document.body.style.touchAction = 'none';
             document.body.appendChild(dragGhost);
         }
 
@@ -3518,21 +3523,22 @@
             if (e.target.closest('.draggable-item, .slot')) e.preventDefault();
         });
         let lastTapWasTouch = false;
+        let lastDoubleTapActionTime = 0;
         document.addEventListener('click', function(e) {
             const target = e.target.closest('.draggable-item, .drink-item');
             if (!target || e.target.closest('button')) return;
             const now = Date.now();
-            // 마우스 더블클릭(detail===2) 또는 연속 클릭(400ms 이내) 감지
-            const isMouseDoubleClick = (e.detail === 2);
-            const isDoubleTap = isMouseDoubleClick || (target === lastTapTarget && (now - lastTapTime) <= DOUBLE_TAP_MS);
-            if (lastTapWasTouch && target === lastTapTarget && (now - lastTapTime) < 350) {
+            if (now - lastDoubleTapActionTime < 500) return;
+            if (lastTapWasTouch) {
                 lastTapWasTouch = false;
                 return;
             }
-            lastTapWasTouch = false;
+            const isMouseDoubleClick = (e.detail === 2);
+            const isDoubleTap = isMouseDoubleClick || (target === lastTapTarget && (now - lastTapTime) <= DOUBLE_TAP_MS);
             if (isDoubleTap) {
                 lastTapTarget = null;
                 lastTapTime = 0;
+                lastDoubleTapActionTime = now;
                 if (target.dataset.type === 'ingredient' && target.dataset.itemId) {
                     handleDoubleTapIngredient(target.dataset.itemId, e.clientX, e.clientY);
                 } else if (target.dataset.type === 'drink') {
@@ -3568,43 +3574,48 @@
             };
         }, { passive: true });
 
-        // 롱프레스 전 움직임: pending 해제 (스크롤 허용)
         document.addEventListener('touchmove', function(e) {
-            if (!pendingDrag || isDragging) return;
-            const MOVE_THRESHOLD = 8;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const t = e.changedTouches[i];
-                if (t.identifier === pendingDrag.touchId) {
-                    const dx = t.clientX - pendingDrag.startX;
-                    const dy = t.clientY - pendingDrag.startY;
-                    if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) {
-                        clearTimeout(pendingDrag.timerId);
-                        pendingDrag = null;
+            if (isDragging) {
+                let found = false;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeTouchId) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        currentTouchX = e.changedTouches[i].clientX;
+                        currentTouchY = e.changedTouches[i].clientY;
+                        updateGhostPosition();
+                        found = true;
+                        break;
                     }
-                    break;
                 }
-            }
-        }, { passive: true });
-
-        // 드래그 중: 위치 업데이트 + preventDefault (capture로 먼저 처리)
-        document.addEventListener('touchmove', function(e) {
-            if (!isDragging) return;
-            let found = false;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === activeTouchId) {
-                    e.preventDefault();
-                    currentTouchX = e.changedTouches[i].clientX;
-                    currentTouchY = e.changedTouches[i].clientY;
-                    updateGhostPosition();
-                    found = true;
-                    break;
+                if (!found && e.touches) {
+                    for (let i = 0; i < e.touches.length; i++) {
+                        if (e.touches[i].identifier === activeTouchId) {
+                            e.preventDefault();
+                            e.stopImmediatePropagation();
+                            currentTouchX = e.touches[i].clientX;
+                            currentTouchY = e.touches[i].clientY;
+                            updateGhostPosition();
+                            break;
+                        }
+                    }
                 }
+                return;
             }
-            if (!found && e.touches && e.touches.length === 1 && e.touches[0].identifier === activeTouchId) {
-                e.preventDefault();
-                currentTouchX = e.touches[0].clientX;
-                currentTouchY = e.touches[0].clientY;
-                updateGhostPosition();
+            if (pendingDrag) {
+                const MOVE_THRESHOLD = 8;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    if (t.identifier === pendingDrag.touchId) {
+                        const dx = t.clientX - pendingDrag.startX;
+                        const dy = t.clientY - pendingDrag.startY;
+                        if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) {
+                            clearTimeout(pendingDrag.timerId);
+                            pendingDrag = null;
+                        }
+                        break;
+                    }
+                }
             }
         }, { passive: false, capture: true });
 
@@ -3622,6 +3633,7 @@
                         if (isDoubleTap) {
                             lastTapTarget = null;
                             lastTapTime = 0;
+                            lastDoubleTapActionTime = Date.now();
                             if (target.dataset.type === 'ingredient' && target.dataset.itemId) {
                                 handleDoubleTapIngredient(target.dataset.itemId, tx, ty);
                             } else if (target.dataset.type === 'drink') {
@@ -3662,6 +3674,7 @@
             if (!endedTouch) {
                 isDragging = false;
                 document.body.classList.remove('dragging-active');
+                document.body.style.touchAction = '';
                 if (draggingItem) draggingItem.classList.remove('dragging-source');
                 highlightDropZones(draggingItem?.dataset?.type, false);
                 if (dragGhost?.parentNode) dragGhost.parentNode.removeChild(dragGhost);
@@ -3674,6 +3687,7 @@
             
             // Cleanup visuals
             document.body.classList.remove('dragging-active');
+            document.body.style.touchAction = '';
             draggingItem.classList.remove('dragging-source');
             highlightDropZones(draggingItem.dataset.type, false);
             
