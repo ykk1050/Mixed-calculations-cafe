@@ -864,10 +864,10 @@
             padding: 6px 8px;
             margin-bottom: 0;
             display: flex;
-            gap: 6px;
+            gap: 8px;
             overflow-x: auto;
             border: 2px solid #8d6e63;
-            min-height: 52px;
+            min-height: 120px;
             align-items: center;
             box-sizing: border-box;
         }
@@ -876,34 +876,34 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 38px;
-            min-width: 38px;
+            width: 52px;
+            min-width: 52px;
             flex-shrink: 0;
             position: relative;
         }
 
         .mini-customer img {
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             border: 2px solid #ddd;
         }
         .mini-customer-avatar {
             position: relative;
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
         }
         .mini-customer-avatar img {
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             border: 2px solid #ddd;
         }
         .mini-anger-emoji {
             position: absolute;
-            top: -8px;
-            right: -8px;
-            font-size: 0.95rem;
+            top: -10px;
+            right: -10px;
+            font-size: 1.3rem;
             line-height: 1;
             pointer-events: none;
             filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
@@ -912,9 +912,9 @@
 
         .mini-patience {
             width: 100%;
-            height: 4px;
+            height: 5px;
             background: #eee;
-            margin-top: 2px;
+            margin-top: 3px;
             border-radius: 2px;
         }
         
@@ -1114,7 +1114,7 @@
             #scene-kitchen #recipe-area { min-height: 60px; max-height: 16vh; padding: 4px 6px; flex: 0 0 auto; }
             #scene-kitchen #recipe-area h2, #scene-kitchen #recipe-area p { margin: 2px 0; font-size: 0.85rem; }
             #scene-kitchen #kitchen-area { flex: 0 0 auto; padding: 6px; }
-            #scene-kitchen #kitchen-status-bar { flex-shrink: 0; min-height: 42px; }
+            #scene-kitchen #kitchen-status-bar { flex-shrink: 0; min-height: 80px; }
             #scene-kitchen #inventory-area { min-height: 120px; max-height: 140px; flex: 0 0 auto; overflow: hidden; display: flex; flex-direction: column; }
             #scene-kitchen #inventory-area h2 { margin: 4px 0 2px; font-size: 0.9rem; flex-shrink: 0; }
             #scene-kitchen #inventory-area .item-list { min-height: 100px; max-height: 120px; flex: 1; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
@@ -1767,7 +1767,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00113</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00114</div>
 
     <script>
         // --- Game Data ---
@@ -3180,7 +3180,7 @@
                         <img src="${customerImg}" alt="C">
                         ${isInGrace ? '<span class="mini-anger-emoji">😡</span>' : ''}
                     </div>
-                    <div style="font-size:0.6rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center; max-width:38px;">${recipe.name}</div>
+                    <div style="font-size:0.65rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center; max-width:52px;">${recipe.name}</div>
                     <div class="mini-patience">
                         <div class="mini-patience-bar" style="width:${patiencePct}%; background-color:${barColor};"></div>
                     </div>
