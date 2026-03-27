@@ -1262,7 +1262,7 @@
             .customer-card { width: 95px; padding: 4px; }
         }
 
-        /* 플로팅 네비 - 상점용 (주방은 제조대 옆 인라인 버튼 사용) */
+        /* 플로팅 네비 - 주방 전용 */
         .floating-nav {
             position: fixed;
             left: 50%;
@@ -1280,20 +1280,6 @@
         }
         .floating-nav .btn { font-size: 1rem !important; padding: 10px 24px !important; }
         #floating-nav-kitchen { display: none !important; }
-        #floating-nav-shop {
-            top: auto;
-            bottom: max(12px, env(safe-area-inset-bottom));
-            transform: translateX(-50%);
-            padding: 10px 16px;
-        }
-        @media (min-width: 1025px) {
-            #floating-nav-shop { display: none !important; }
-        }
-        @media (max-width: 1024px) {
-            body:has(#scene-shop.active) #floating-nav-shop,
-            body.scene-shop #floating-nav-shop { display: flex !important; visibility: visible !important; }
-            #scene-shop .nav-btn-container { display: none; }
-        }
 
         /* 버전 정보 (화면 하단, 모든 씬에서 항상 표시) */
         #version-info {
@@ -1308,8 +1294,8 @@
         }
         #record-panel {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            left: 10px;
+            bottom: 12px;
             z-index: 12;
             width: 230px;
             background: rgba(255, 255, 255, 0.93);
@@ -1321,9 +1307,40 @@
             color: #3e2723;
             line-height: 1.35;
         }
-        #record-panel .title {
-            font-weight: 800;
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
             margin-bottom: 6px;
+        }
+        .panel-head .title {
+            font-weight: 800;
+            margin-bottom: 0;
+        }
+        .panel-min-btn {
+            border: 1px solid #90a4ae;
+            border-radius: 6px;
+            background: #eceff1;
+            color: #263238;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            min-width: 38px;
+            padding: 2px 6px;
+        }
+        .panel-min-btn:hover {
+            background: #cfd8dc;
+        }
+        .panel-content {
+            display: block;
+        }
+        .floating-panel.minimized .panel-content {
+            display: none;
+        }
+        .floating-panel.minimized {
+            width: 150px !important;
+            padding-bottom: 6px;
         }
         #record-panel .row {
             display: flex;
@@ -1353,7 +1370,7 @@
         }
         #ranking-panel {
             position: absolute;
-            top: 280px;
+            bottom: 12px;
             right: 10px;
             z-index: 12;
             width: 230px;
@@ -1369,6 +1386,13 @@
         #ranking-panel .title {
             font-weight: 800;
             margin-bottom: 6px;
+        }
+        .shop-header-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
         }
         #ranking-list {
             max-height: 170px;
@@ -1476,8 +1500,8 @@
                 width: 170px;
                 font-size: 0.62rem;
                 padding: 6px 8px;
-                top: 6px;
-                right: 6px;
+                left: 6px;
+                bottom: 8px;
             }
             #record-reset-btn {
                 font-size: 0.58rem;
@@ -1486,8 +1510,11 @@
             #ranking-panel {
                 width: 170px;
                 font-size: 0.6rem;
-                top: 250px;
+                bottom: 8px;
                 right: 6px;
+            }
+            .floating-panel.minimized {
+                width: 118px !important;
             }
         }
 
@@ -1516,28 +1543,38 @@
         <!-- Scene 1: Counter (Main) -->
         <div id="scene-counter" class="scene active">
             <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">☕ 카페 카운터</h2>
-            <div id="record-panel">
-                <div class="title">🏆 플레이 기록</div>
-                <div id="record-panel-content"></div>
-                <button id="record-reset-btn" onclick="resetPlayerRecords()">기록 초기화</button>
+            <div id="record-panel" class="floating-panel">
+                <div class="panel-head">
+                    <div class="title">🏆 플레이 기록</div>
+                    <button class="panel-min-btn" id="record-panel-min-btn" onclick="togglePanelMinimize('record-panel')">최소화</button>
+                </div>
+                <div class="panel-content">
+                    <div id="record-panel-content"></div>
+                    <button id="record-reset-btn" onclick="resetPlayerRecords()">기록 초기화</button>
+                </div>
             </div>
-            <div id="ranking-panel">
-                <div class="title">🌐 글로벌 랭킹</div>
-                <div id="player-nickname-badge">닉네임: (미설정)</div>
-                <select id="ranking-metric" onchange="loadGlobalRanking()">
-                    <option value="score">종합 점수</option>
-                    <option value="bestRep">최고 평판</option>
-                    <option value="bestGold">최고 골드</option>
-                    <option value="maxServedCustomers">최대 서빙 고객수</option>
-                    <option value="bestStreak">최고 연속 정답</option>
-                    <option value="maxCombo">최대 콤보</option>
-                    <option value="accuracy">정답률</option>
-                    <option value="correct">정답 횟수</option>
-                </select>
-                <button id="ranking-submit-btn" onclick="submitGlobalRanking()">현재 기록 랭킹 등록</button>
-                <button id="ranking-refresh-btn" onclick="loadGlobalRanking()">랭킹 새로고침</button>
-                <div id="my-rank-row">내 등수: 확인 중...</div>
-                <div id="ranking-list">랭킹 불러오는 중...</div>
+            <div id="ranking-panel" class="floating-panel">
+                <div class="panel-head">
+                    <div class="title">🌐 글로벌 랭킹</div>
+                    <button class="panel-min-btn" id="ranking-panel-min-btn" onclick="togglePanelMinimize('ranking-panel')">최소화</button>
+                </div>
+                <div class="panel-content">
+                    <div id="player-nickname-badge">닉네임: (미설정)</div>
+                    <select id="ranking-metric" onchange="loadGlobalRanking()">
+                        <option value="score">종합 점수</option>
+                        <option value="bestRep">최고 평판</option>
+                        <option value="bestGold">최고 골드</option>
+                        <option value="maxServedCustomers">최대 서빙 고객수</option>
+                        <option value="bestStreak">최고 연속 정답</option>
+                        <option value="maxCombo">최대 콤보</option>
+                        <option value="accuracy">정답률</option>
+                        <option value="correct">정답 횟수</option>
+                    </select>
+                    <button id="ranking-submit-btn" onclick="submitGlobalRanking()">현재 기록 랭킹 등록</button>
+                    <button id="ranking-refresh-btn" onclick="loadGlobalRanking()">랭킹 새로고침</button>
+                    <div id="my-rank-row">내 등수: 확인 중...</div>
+                    <div id="ranking-list">랭킹 불러오는 중...</div>
+                </div>
             </div>
             
             <div class="counter-background-wrapper">
@@ -1625,7 +1662,10 @@
 
         <!-- Scene 3: Shop -->
         <div id="scene-shop" class="scene">
-            <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">🛒 상점</h2>
+            <div class="shop-header-row">
+                <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px; margin: 0;">🛒 상점</h2>
+                <button class="btn nav-btn" onclick="switchScene('counter')" style="white-space: nowrap;">🔙 나가기</button>
+            </div>
             <p>상점 이용 중에는 손님의 인내심이 줄어들지 않습니다.</p>
             
             <div id="shop-area" class="panel" style="overflow-x: auto; height: 60vh;">
@@ -1634,18 +1674,12 @@
                 </div>
             </div>
 
-            <div class="nav-btn-container">
-                <button class="btn nav-btn" onclick="switchScene('counter')">🔙 나가기</button>
-            </div>
         </div>
     </div>
 
     <!-- 모바일용 플로팅 네비 버튼 (씬 overflow 영향 없이 항상 표시) -->
     <div id="floating-nav-kitchen" class="floating-nav" style="display: none;">
         <button class="btn nav-btn" onclick="switchScene('counter')">🔙 카운터로 복귀</button>
-    </div>
-    <div id="floating-nav-shop" class="floating-nav" style="display: none;">
-        <button class="btn nav-btn" onclick="switchScene('counter')">🔙 나가기</button>
     </div>
 
     <!-- Math Modal -->
@@ -1690,7 +1724,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00098</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00099</div>
 
     <script>
         // --- Game Data ---
@@ -2020,6 +2054,29 @@
             const badge = document.getElementById('player-nickname-badge');
             if (!badge) return;
             badge.innerText = `닉네임: ${playerProfile.nickname || '(미설정)'}`;
+        }
+
+        function setPanelMinimized(panelId, minimized) {
+            const panel = document.getElementById(panelId);
+            const btn = document.getElementById(`${panelId}-min-btn`);
+            if (!panel || !btn) return;
+            panel.classList.toggle('minimized', minimized);
+            btn.innerText = minimized ? '펼치기' : '최소화';
+            localStorage.setItem(`panelMin:${panelId}`, minimized ? '1' : '0');
+        }
+
+        function togglePanelMinimize(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+            const next = !panel.classList.contains('minimized');
+            setPanelMinimized(panelId, next);
+        }
+
+        function loadPanelMinimizeState() {
+            ['record-panel', 'ranking-panel'].forEach(panelId => {
+                const minimized = localStorage.getItem(`panelMin:${panelId}`) === '1';
+                setPanelMinimized(panelId, minimized);
+            });
         }
 
         function resetPlayerRecords() {
@@ -4194,6 +4251,7 @@
         loadPlayerRecords();
         loadPlayerProfile();
         ensureNicknameModal();
+        loadPanelMinimizeState();
         if (!loadGame()) {
             startLevel(1);
         }
