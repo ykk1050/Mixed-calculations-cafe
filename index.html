@@ -1767,7 +1767,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00114</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00115</div>
 
     <script>
         // --- Game Data ---
@@ -1868,14 +1868,14 @@
             gold: 0,
             rep: 0,
             inventory: {
-                // ... (기존 재료)
-                bean: 5, milk: 5, water: 5, sugar: 3,
-                ice: 5, choco: 2, caramel: 2, vanilla: 2,
-                sparkling: 3, lemon: 2, lime: 2, grapefruit: 2,
-                strawberry: 2, blueberry: 2, mango: 2, peach: 2,
-                matcha: 2, black_tea: 2, mint: 2,
-                whip: 2, cinnamon: 2, herb: 2, java_chip: 2,
-                yogurt: 2, honey: 2, cream: 2
+                water: 5, milk: 5, sparkling: 3,
+                bean: 5,
+                matcha: 2, yogurt_p: 2, cinnamon: 2, choco_p: 2,
+                vanilla: 2, choco_s: 2, caramel: 2, sugar: 3,
+                black_tea: 2, chamomile: 2, earlgrey: 2,
+                strawberry: 2, sweet_potato: 2, peach: 2, lemon: 2,
+                grapefruit: 2, grape: 2, mango: 2,
+                whip: 2, cream: 2, ice_cream: 2, javachip: 2, ice: 5
             },
             customers: [],
             combo: 0,
@@ -4355,6 +4355,23 @@
                     if (!state.unlockedItems) state.unlockedItems = [];
                     if (!state.theme) state.theme = 'default';
                     if (!state.bgm) state.bgm = 'default';
+
+                    // 인벤토리 키 마이그레이션 (구버전 세이브 호환)
+                    const inv = state.inventory;
+                    const keyMigrations = { java_chip: 'javachip', yogurt: 'yogurt_p', choco: 'choco_p' };
+                    for (const [oldKey, newKey] of Object.entries(keyMigrations)) {
+                        if (inv[oldKey] !== undefined && inv[newKey] === undefined) {
+                            inv[newKey] = inv[oldKey];
+                        }
+                        if (inv[oldKey] !== undefined && inv[newKey] !== undefined && oldKey !== newKey) {
+                            inv[newKey] = Math.max(inv[newKey], inv[oldKey]);
+                            delete inv[oldKey];
+                        }
+                    }
+                    // 누락된 재료 키 보충
+                    ingredients.forEach(ing => {
+                        if (inv[ing.id] === undefined) inv[ing.id] = 0;
+                    });
 
                     // Apply Theme/BGM on load
                     applyTheme(state.theme);
