@@ -1767,7 +1767,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.0011</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00111</div>
 
     <script>
         // --- Game Data ---
@@ -2357,7 +2357,13 @@
                     nickname: playerProfile.nickname,
                     deviceId: playerProfile.deviceId
                 });
-                const rows = Array.isArray(result.rows) ? result.rows : [];
+                const rawRows = Array.isArray(result.rows) ? result.rows : [];
+                const seen = new Set();
+                const rows = rawRows.filter(r => {
+                    if (seen.has(r.nickname)) return false;
+                    seen.add(r.nickname);
+                    return true;
+                });
                 if (rows.length === 0) {
                     list.innerText = '아직 등록된 랭킹이 없습니다.';
                     renderMyRank(metric, result.myRank || 0, result.myValue || 0);
