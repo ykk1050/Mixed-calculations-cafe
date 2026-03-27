@@ -673,13 +673,13 @@
         body.theme-cat .btn { background-color: #ec407a; }
         
         body.theme-space {
-            background-color: #1a237e;
+            background-color: #0a0e2a;
             color: #e8eaf6;
-            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
-            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
-            radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
-            background-size: 550px 550px, 350px 350px, 250px 250px; 
-            background-position: 0 0, 40px 60px, 130px 270px;
+            background-image: url('space station.png');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
         }
         body.theme-space .panel { background-color: #283593; border-color: #7986cb; color: #fff; }
         body.theme-space .btn { background-color: #3949ab; }
@@ -1608,7 +1608,7 @@
                         <option value="maxServedCustomers">최대 서빙 고객수</option>
                         <option value="bestStreak">최고 연속 정답</option>
                         <option value="maxCombo">최대 콤보</option>
-                        <option value="accuracy">정답률</option>
+                        <option value="accuracy">정답률 (30문제 이상)</option>
                         <option value="correct">정답 횟수</option>
                     </select>
                     <button id="ranking-submit-btn" onclick="submitGlobalRanking()">현재 기록 랭킹 등록</button>
@@ -1767,7 +1767,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00115</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00116</div>
 
     <script>
         // --- Game Data ---
@@ -1972,7 +1972,7 @@
 
             // 3. Themes
             { id: 'theme_cat', name: '고양이 카페', price: 1000, type: 'theme', desc: '야옹~ 고양이 테마 적용', icon: '🐱', themeId: 'cat' },
-            { id: 'theme_space', name: '우주 정거장', price: 2000, type: 'theme', desc: '무중력 우주 테마 적용', icon: '🚀', themeId: 'space' },
+            { id: 'theme_space', name: '우주 정거장', price: 1000, type: 'theme', desc: '무중력 우주 테마 적용', icon: '🚀', themeId: 'space' },
 
             // 4. BGM (Simulated for now)
             { id: 'bgm_jazz', name: '재즈 음악', price: 300, type: 'bgm', desc: '부드러운 재즈 선율', icon: '🎷', bgmId: 'jazz' },
@@ -2357,7 +2357,15 @@
                     nickname: playerProfile.nickname,
                     deviceId: playerProfile.deviceId
                 });
-                const rawRows = Array.isArray(result.rows) ? result.rows : [];
+                let rawRows = Array.isArray(result.rows) ? result.rows : [];
+                if (metric === 'accuracy') {
+                    rawRows = rawRows.filter(r => (Number(r.attempts) || Number(r.correct) + Number(r.wrong) || 0) >= 30);
+                }
+                rawRows.sort((a, b) => {
+                    const va = Number(a[metric] !== undefined ? a[metric] : a.score) || 0;
+                    const vb = Number(b[metric] !== undefined ? b[metric] : b.score) || 0;
+                    return vb - va;
+                });
                 const seen = new Set();
                 const rows = rawRows.filter(r => {
                     if (seen.has(r.nickname)) return false;
