@@ -1767,7 +1767,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00112</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00113</div>
 
     <script>
         // --- Game Data ---
@@ -3058,7 +3058,7 @@
                         drinkDiv.innerHTML = `
                             <div style="transform: scale(1.6); transform-origin: center;">${recipeIcon}</div>
                             <div class="drink-quality">${qualityIcon}</div>
-                            ${drink.quality === 'F' ? '<div class="trash-guide-text">꾹 눌러서 끌어서 오른쪽 쓰레기통에 버려주세요</div>' : ''}
+                            ${drink.quality === 'F' ? '<div class="trash-guide-text">꾹 누르면 자동으로 버려집니다</div>' : ''}
                         `;
                         target.appendChild(drinkDiv);
                     });
@@ -3501,6 +3501,15 @@
             if (!p || isDragging) return;
             const target = p.target;
             pendingDrag = null;
+            if (target.dataset.type === 'drink') {
+                const idx = parseInt(target.dataset.drinkIndex || '-1');
+                if (idx >= 0 && idx < finishedDrinks.length && finishedDrinks[idx].quality === 'F') {
+                    finishedDrinks.splice(idx, 1);
+                    selectedTrashDrinkIndex = null;
+                    updateUI();
+                    return;
+                }
+            }
             activeTouchId = p.touchId;
             draggingItem = target;
             isDragging = true;
