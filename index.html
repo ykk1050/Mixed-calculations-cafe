@@ -1325,7 +1325,7 @@
             pointer-events: none;
         }
         #record-panel {
-            position: absolute;
+            position: fixed;
             left: 10px;
             bottom: 84px;
             z-index: 12;
@@ -1345,7 +1345,10 @@
             justify-content: space-between;
             gap: 8px;
             margin-bottom: 6px;
+            touch-action: none;
+            cursor: grab;
         }
+        .panel-head.dragging { cursor: grabbing; }
         .panel-head .title {
             font-weight: 800;
             margin-bottom: 0;
@@ -1401,7 +1404,7 @@
             background: #ffe0b2;
         }
         #ranking-panel {
-            position: absolute;
+            position: fixed;
             bottom: 84px;
             right: 10px;
             z-index: 12;
@@ -1621,7 +1624,7 @@
                 <div class="serving-counter-area" id="serving-counter-main">
                     <span class="serving-counter-label">(음료 더블탭 → 손님에게 전달)</span>
                     <div class="serving-counter-slots"></div>
-                    <button id="trash-bin-main" class="trash-bin-btn" onclick="discardSelectedTrashDrink()">🗑️ 쓰레기통</button>
+                    <button id="trash-bin-main" class="trash-bin-btn" data-target-type="trash" ondragover="allowDrop(event)" ondrop="dropTrash(event)" onclick="discardSelectedTrashDrink()">🗑️ 쓰레기통</button>
                 </div>
             </div>
 
@@ -1673,7 +1676,7 @@
                         <h3>🍽️ 완성된 음료</h3>
                         <div class="serving-counter-area" id="serving-counter-kitchen">
                             <div class="serving-counter-slots" style="flex:1;"></div>
-                            <button id="trash-bin-kitchen" class="trash-bin-btn" onclick="discardSelectedTrashDrink()">🗑️ 쓰레기통</button>
+                            <button id="trash-bin-kitchen" class="trash-bin-btn" data-target-type="trash" ondragover="allowDrop(event)" ondrop="dropTrash(event)" onclick="discardSelectedTrashDrink()">🗑️ 쓰레기통</button>
                         </div>
                 </div>
                 <div class="sidebar-panel kitchen-col-right" style="grid-row: 2;">
@@ -1758,7 +1761,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00099</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.001</div>
 
     <script>
         // --- Game Data ---
@@ -1910,17 +1913,12 @@
             
             document.body.classList.remove('scene-kitchen', 'scene-shop');
             const fnKitchen = document.getElementById('floating-nav-kitchen');
-            const fnShop = document.getElementById('floating-nav-shop');
             if (fnKitchen) fnKitchen.style.display = 'none';
-            if (fnShop) fnShop.style.display = 'none';
             if (sceneName === 'kitchen') {
                 document.body.classList.add('scene-kitchen');
                 if (fnKitchen) fnKitchen.style.display = 'flex';
             }
-            if (sceneName === 'shop') {
-                document.body.classList.add('scene-shop');
-                if (fnShop) fnShop.style.display = 'flex';
-            }
+            if (sceneName === 'shop') document.body.classList.add('scene-shop');
             
             ['scene-counter', 'scene-kitchen', 'scene-shop'].forEach(id => {
                 const el = document.getElementById(id);
@@ -2111,6 +2109,110 @@
             ['record-panel', 'ranking-panel'].forEach(panelId => {
                 const minimized = localStorage.getItem(`panelMin:${panelId}`) === '1';
                 setPanelMinimized(panelId, minimized);
+            });
+        }
+
+        function savePanelPosition(panelId, left, top) {
+            localStorage.setItem(`panelPos:${panelId}`, JSON.stringify({ left, top }));
+        }
+
+        function loadPanelPositionState() {
+            ['record-panel', 'ranking-panel'].forEach(panelId => {
+                const panel = document.getElementById(panelId);
+                if (!panel) return;
+                const raw = localStorage.getItem(`panelPos:${panelId}`);
+                if (!raw) return;
+                try {
+                    const pos = JSON.parse(raw);
+                    if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+                        panel.style.left = `${pos.left}px`;
+                        panel.style.top = `${pos.top}px`;
+                        panel.style.right = 'auto';
+                        panel.style.bottom = 'auto';
+                    }
+                } catch (e) {
+                    // ignore broken saved position
+                }
+            });
+        }
+
+        function initMovablePanels() {
+            ['record-panel', 'ranking-panel'].forEach(panelId => {
+                const panel = document.getElementById(panelId);
+                if (!panel) return;
+                const head = panel.querySelector('.panel-head');
+                if (!head) return;
+                let timer = null;
+                let dragging = false;
+                let startX = 0;
+                let startY = 0;
+                let offsetX = 0;
+                let offsetY = 0;
+                const LONG_PRESS = 220;
+
+                function startDrag(clientX, clientY) {
+                    const rect = panel.getBoundingClientRect();
+                    dragging = true;
+                    panel.classList.add('dragging-panel');
+                    head.classList.add('dragging');
+                    startX = clientX;
+                    startY = clientY;
+                    offsetX = clientX - rect.left;
+                    offsetY = clientY - rect.top;
+                    panel.style.left = `${rect.left}px`;
+                    panel.style.top = `${rect.top}px`;
+                    panel.style.right = 'auto';
+                    panel.style.bottom = 'auto';
+                }
+
+                function moveDrag(clientX, clientY) {
+                    if (!dragging) return;
+                    const maxX = Math.max(0, window.innerWidth - panel.offsetWidth);
+                    const maxY = Math.max(0, window.innerHeight - panel.offsetHeight);
+                    const left = Math.min(maxX, Math.max(0, clientX - offsetX));
+                    const top = Math.min(maxY, Math.max(0, clientY - offsetY));
+                    panel.style.left = `${left}px`;
+                    panel.style.top = `${top}px`;
+                }
+
+                function endDrag() {
+                    if (timer) {
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                    if (dragging) {
+                        dragging = false;
+                        panel.classList.remove('dragging-panel');
+                        head.classList.remove('dragging');
+                        const rect = panel.getBoundingClientRect();
+                        savePanelPosition(panelId, rect.left, rect.top);
+                    }
+                }
+
+                head.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    if (e.target.closest('button')) return;
+                    timer = setTimeout(() => startDrag(e.clientX, e.clientY), LONG_PRESS);
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (dragging) moveDrag(e.clientX, e.clientY);
+                });
+                document.addEventListener('mouseup', () => endDrag());
+
+                head.addEventListener('touchstart', (e) => {
+                    if (e.target.closest('button')) return;
+                    if (!e.changedTouches || e.changedTouches.length === 0) return;
+                    const t = e.changedTouches[0];
+                    timer = setTimeout(() => startDrag(t.clientX, t.clientY), LONG_PRESS);
+                }, { passive: true });
+                document.addEventListener('touchmove', (e) => {
+                    if (!dragging || !e.changedTouches || e.changedTouches.length === 0) return;
+                    const t = e.changedTouches[0];
+                    e.preventDefault();
+                    moveDrag(t.clientX, t.clientY);
+                }, { passive: false });
+                document.addEventListener('touchend', () => endDrag());
+                document.addEventListener('touchcancel', () => endDrag());
             });
         }
 
@@ -2944,7 +3046,7 @@
                         drinkDiv.innerHTML = `
                             <div style="transform: scale(1.6); transform-origin: center;">${recipeIcon}</div>
                             <div class="drink-quality">${qualityIcon}</div>
-                            ${drink.quality === 'F' ? '<div class="trash-guide-text">꾹 눌러서 쓰레기통에 버려주세요</div>' : ''}
+                            ${drink.quality === 'F' ? '<div class="trash-guide-text">꾹 눌러서 끌어서 오른쪽 쓰레기통에 버려주세요</div>' : ''}
                         `;
                         target.appendChild(drinkDiv);
                     });
@@ -3240,6 +3342,15 @@
             }
         }
 
+        function dropTrash(e) {
+            e.preventDefault();
+            const type = e.dataTransfer.getData("type");
+            const drinkIndex = parseInt(e.dataTransfer.getData("drinkIndex") || "-1");
+            if (handleTrashDrop(type, drinkIndex)) {
+                createVisualEffect(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2, 'serve');
+            }
+        }
+
         function handleDrinkDrop(type, customerIndex, drinkIndex) {
             if (type !== "drink") return false;
             if (drinkIndex < 0 || drinkIndex >= finishedDrinks.length) return false;
@@ -3252,8 +3363,8 @@
             const customer = state.customers[customerIndex];
             
             if (drink.quality === 'F') {
-                serveCustomer(customerIndex, 'F', drinkIndex);
-                return true;
+                alert("음식물 쓰레기는 손님에게 줄 수 없습니다. 오른쪽 쓰레기통에 버려주세요.");
+                return false;
             } else if (customer.orderId === drink.recipeId) {
                 serveCustomer(customerIndex, drink.quality, drinkIndex);
                 return true;
@@ -3261,6 +3372,23 @@
                 alert("이 손님이 주문한 음료가 아닙니다!");
                 return false;
             }
+        }
+
+        function handleTrashDrop(type, drinkIndex) {
+            if (type !== "drink") return false;
+            if (drinkIndex < 0 || drinkIndex >= finishedDrinks.length) return false;
+            const drink = finishedDrinks[drinkIndex];
+            if (!drink || drink.quality !== 'F') {
+                alert("음식물 쓰레기(F)만 쓰레기통에 버릴 수 있습니다.");
+                return false;
+            }
+            finishedDrinks.splice(drinkIndex, 1);
+            if (selectedTrashDrinkIndex !== null) {
+                if (selectedTrashDrinkIndex === drinkIndex) selectedTrashDrinkIndex = null;
+                else if (selectedTrashDrinkIndex > drinkIndex) selectedTrashDrinkIndex--;
+            }
+            updateUI();
+            return true;
         }
 
         /* --- 더블탭: 재료→제조대, 음료→고객 --- */
@@ -3343,6 +3471,10 @@
                     if (highlight) el.classList.add('highlight-drop');
                     else el.classList.remove('highlight-drop');
                 });
+                document.querySelectorAll('[data-target-type="trash"]').forEach(el => {
+                    if (highlight) el.classList.add('active');
+                    else el.classList.remove('active');
+                });
             }
         }
 
@@ -3422,14 +3554,6 @@
             const touch = e.changedTouches[0];
             const timerId = setTimeout(function() {
                 if (pendingDrag && pendingDrag.touchId === touch.identifier && !isDragging) {
-                    if (pendingDrag.target && pendingDrag.target.dataset.type === 'drink') {
-                        const drinkIdx = parseInt(pendingDrag.target.dataset.drinkIndex || '-1');
-                        if (drinkIdx >= 0 && drinkIdx < finishedDrinks.length && finishedDrinks[drinkIdx].quality === 'F') {
-                            selectTrashDrinkForDiscard(drinkIdx);
-                            pendingDrag = null;
-                            return;
-                        }
-                    }
                     startDragFromPending(pendingDrag);
                 }
             }, LONG_PRESS_MS);
@@ -3561,7 +3685,8 @@
                 if (!el) return null;
                 return {
                     slot: el.closest('[data-target-type="slot"]'),
-                    customer: el.closest('[data-target-type="customer"]')
+                    customer: el.closest('[data-target-type="customer"]'),
+                    trash: el.closest('[data-target-type="trash"]')
                 };
             }
 
@@ -3582,7 +3707,7 @@
                     const centerX = ghostLeft + deltaX + ghostWidth / 2;
                     const centerY = ghostTop + deltaY + ghostHeight / 2;
                     const centerTargets = getTargetFromPoint(centerX, centerY);
-                    if (centerTargets && (centerTargets.slot || centerTargets.customer)) {
+                    if (centerTargets && (centerTargets.slot || centerTargets.customer || centerTargets.trash)) {
                         targets = centerTargets;
                     }
                 }
@@ -3644,16 +3769,51 @@
                 }
             }
 
+            // 5. Fallback: 음료→쓰레기통 드롭 영역 확인
+            if (targets && !targets.trash && draggingItem.dataset.type === 'drink') {
+                const trashBins = document.querySelectorAll('[data-target-type="trash"]');
+                const points = [{x: dropX, y: dropY}];
+                if (dragGhost) {
+                    const dx = currentTouchX - initialTouchX;
+                    const dy = currentTouchY - initialTouchY;
+                    const gl = parseFloat(dragGhost.style.left) || 0;
+                    const gt = parseFloat(dragGhost.style.top) || 0;
+                    const gw = parseFloat(dragGhost.style.width) || 50;
+                    const gh = parseFloat(dragGhost.style.height) || 50;
+                    points.push({ x: gl + dx + gw/2, y: gt + dy + gh/2 });
+                }
+                const PAD = 24;
+                for (const bin of trashBins) {
+                    if (getComputedStyle(bin).display === 'none') continue;
+                    const r = bin.getBoundingClientRect();
+                    const hitLeft = r.left - PAD, hitRight = r.right + PAD;
+                    const hitTop = r.top - PAD, hitBottom = r.bottom + PAD;
+                    for (const p of points) {
+                        if (p.x >= hitLeft && p.x <= hitRight && p.y >= hitTop && p.y <= hitBottom) {
+                            targets = { slot: null, customer: null, trash: bin };
+                            break;
+                        }
+                    }
+                    if (targets && targets.trash) break;
+                }
+            }
+
             // Process Drop
             if (targets) {
                 const slotTarget = targets.slot;
                 const customerTarget = targets.customer;
+                const trashTarget = targets.trash;
 
                 if (draggingItem.dataset.type === 'ingredient' && slotTarget) {
                     const itemId = draggingItem.dataset.itemId;
                     const targetIngId = slotTarget.dataset.ingId;
                     if (handleIngredientDrop('ingredient', itemId, targetIngId)) {
                         createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'ingredient');
+                    }
+                } else if (draggingItem.dataset.type === 'drink' && trashTarget) {
+                    const drinkIdx = parseInt(draggingItem.dataset.drinkIndex || '0');
+                    if (handleTrashDrop('drink', drinkIdx)) {
+                        createVisualEffect(endedTouch.clientX, endedTouch.clientY, 'serve');
                     }
                 } else if (draggingItem.dataset.type === 'drink' && customerTarget) {
                     const indexStr = customerTarget.dataset.index;
@@ -4338,6 +4498,8 @@
         loadPlayerProfile();
         ensureNicknameModal();
         loadPanelMinimizeState();
+        loadPanelPositionState();
+        initMovablePanels();
         if (!loadGame()) {
             startLevel(1);
         }
