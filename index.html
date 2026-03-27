@@ -329,6 +329,38 @@
             height: 50px; /* Limit drink image height */
             width: auto;
         }
+        .drink-item.trash-selected {
+            border: 2px dashed #e53935;
+            border-radius: 10px;
+            background: rgba(255, 235, 238, 0.9);
+        }
+        .trash-guide-text {
+            margin-top: 2px;
+            color: #d50000;
+            font-size: 0.66rem;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.15;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+        .trash-bin-btn {
+            margin-left: 6px;
+            border: 2px solid #6d4c41;
+            border-radius: 8px;
+            background: #fff3e0;
+            color: #4e342e;
+            font-weight: 800;
+            font-size: 0.78rem;
+            padding: 6px 8px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .trash-bin-btn.active {
+            border-color: #d50000;
+            background: #ffebee;
+            color: #b71c1c;
+            box-shadow: 0 0 0 2px rgba(213, 0, 0, 0.2) inset;
+        }
 
 
         .patience-bar-container {
@@ -1295,7 +1327,7 @@
         #record-panel {
             position: absolute;
             left: 10px;
-            bottom: 12px;
+            bottom: 84px;
             z-index: 12;
             width: 230px;
             background: rgba(255, 255, 255, 0.93);
@@ -1370,7 +1402,7 @@
         }
         #ranking-panel {
             position: absolute;
-            bottom: 12px;
+            bottom: 84px;
             right: 10px;
             z-index: 12;
             width: 230px;
@@ -1501,7 +1533,7 @@
                 font-size: 0.62rem;
                 padding: 6px 8px;
                 left: 6px;
-                bottom: 8px;
+                bottom: 72px;
             }
             #record-reset-btn {
                 font-size: 0.58rem;
@@ -1510,7 +1542,7 @@
             #ranking-panel {
                 width: 170px;
                 font-size: 0.6rem;
-                bottom: 8px;
+                bottom: 72px;
                 right: 6px;
             }
             .floating-panel.minimized {
@@ -1589,6 +1621,7 @@
                 <div class="serving-counter-area" id="serving-counter-main">
                     <span class="serving-counter-label">(음료 더블탭 → 손님에게 전달)</span>
                     <div class="serving-counter-slots"></div>
+                    <button id="trash-bin-main" class="trash-bin-btn" onclick="discardSelectedTrashDrink()">🗑️ 쓰레기통</button>
                 </div>
             </div>
 
@@ -1640,6 +1673,7 @@
                         <h3>🍽️ 완성된 음료</h3>
                         <div class="serving-counter-area" id="serving-counter-kitchen">
                             <div class="serving-counter-slots" style="flex:1;"></div>
+                            <button id="trash-bin-kitchen" class="trash-bin-btn" onclick="discardSelectedTrashDrink()">🗑️ 쓰레기통</button>
                         </div>
                 </div>
                 <div class="sidebar-panel kitchen-col-right" style="grid-row: 2;">
@@ -1964,6 +1998,7 @@
         let activeRecipeId = null;
         let craftingSlots = {}; 
         let finishedDrinks = [];
+        let selectedTrashDrinkIndex = null;
         const MAX_FINISHED_DRINKS = 10;
         const REP_GAME_OVER = -25;
         const REP_WARNING = -10;
@@ -2886,7 +2921,7 @@
                 if (finishedDrinks.length > 0) {
                     finishedDrinks.forEach((drink, idx) => {
                         const drinkDiv = document.createElement('div');
-                        drinkDiv.className = 'drink-item';
+                        drinkDiv.className = `drink-item${idx === selectedTrashDrinkIndex ? ' trash-selected' : ''}`;
                         drinkDiv.draggable = true;
                         drinkDiv.dataset.type = 'drink';
                         drinkDiv.dataset.drinkIndex = String(idx);
@@ -2909,16 +2944,29 @@
                         drinkDiv.innerHTML = `
                             <div style="transform: scale(1.6); transform-origin: center;">${recipeIcon}</div>
                             <div class="drink-quality">${qualityIcon}</div>
+                            ${drink.quality === 'F' ? '<div class="trash-guide-text">꾹 눌러서 쓰레기통에 버려주세요</div>' : ''}
                         `;
                         target.appendChild(drinkDiv);
                     });
                 } else {
+                    selectedTrashDrinkIndex = null;
                     if (currentScene === 'counter') {
                         target.innerHTML = '<div style="color: #666;">주방에서 음료를 만들어오세요!</div>';
                     } else {
                         target.innerHTML = '<div style="color: #999;">음료가 완성되면 여기에 나타납니다.</div>';
                     }
                 }
+            });
+            renderTrashBinState();
+        }
+
+        function renderTrashBinState() {
+            const hasFDrink = finishedDrinks.some(d => d.quality === 'F');
+            ['trash-bin-main', 'trash-bin-kitchen'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.style.display = hasFDrink ? 'inline-block' : 'none';
+                btn.classList.toggle('active', selectedTrashDrinkIndex !== null);
             });
         }
 
@@ -3230,11 +3278,12 @@
             }
         }
         function handleDoubleTapDrink(drinkIndex, clientX, clientY) {
-            if (drinkIndex < 0 || drinkIndex >= finishedDrinks.length || state.customers.length === 0) return;
+            if (drinkIndex < 0 || drinkIndex >= finishedDrinks.length) return;
             const drink = finishedDrinks[drinkIndex];
             if (drink.quality === 'F') {
-                if (handleDrinkDrop('drink', 0, drinkIndex)) createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'serve');
+                selectTrashDrinkForDiscard(drinkIndex);
             } else {
+                if (state.customers.length === 0) return;
                 const idx = state.customers.findIndex(c => c.orderId === drink.recipeId);
                 if (idx >= 0 && handleDrinkDrop('drink', idx, drinkIndex)) {
                     createVisualEffect(clientX || window.innerWidth/2, clientY || window.innerHeight/2, 'serve');
@@ -3242,6 +3291,31 @@
                     alert('이 음료를 주문한 손님이 없습니다!');
                 }
             }
+        }
+
+        function selectTrashDrinkForDiscard(drinkIndex) {
+            if (drinkIndex < 0 || drinkIndex >= finishedDrinks.length) return;
+            const drink = finishedDrinks[drinkIndex];
+            if (!drink || drink.quality !== 'F') return;
+            selectedTrashDrinkIndex = drinkIndex;
+            updateUI();
+        }
+
+        function discardSelectedTrashDrink() {
+            if (selectedTrashDrinkIndex === null || selectedTrashDrinkIndex < 0 || selectedTrashDrinkIndex >= finishedDrinks.length) {
+                alert('먼저 음식물 쓰레기를 꾹 눌러 선택해주세요.');
+                return;
+            }
+            const selected = finishedDrinks[selectedTrashDrinkIndex];
+            if (!selected || selected.quality !== 'F') {
+                selectedTrashDrinkIndex = null;
+                updateUI();
+                return;
+            }
+            finishedDrinks.splice(selectedTrashDrinkIndex, 1);
+            selectedTrashDrinkIndex = null;
+            alert('음식물 쓰레기를 버렸습니다.');
+            updateUI();
         }
 
         // --- Optimized Touch Drag Logic (Mobile Support) ---
@@ -3348,6 +3422,14 @@
             const touch = e.changedTouches[0];
             const timerId = setTimeout(function() {
                 if (pendingDrag && pendingDrag.touchId === touch.identifier && !isDragging) {
+                    if (pendingDrag.target && pendingDrag.target.dataset.type === 'drink') {
+                        const drinkIdx = parseInt(pendingDrag.target.dataset.drinkIndex || '-1');
+                        if (drinkIdx >= 0 && drinkIdx < finishedDrinks.length && finishedDrinks[drinkIdx].quality === 'F') {
+                            selectTrashDrinkForDiscard(drinkIdx);
+                            pendingDrag = null;
+                            return;
+                        }
+                    }
                     startDragFromPending(pendingDrag);
                 }
             }, LONG_PRESS_MS);
@@ -3760,6 +3842,10 @@
             // 제조대에서 해당 음료 제거
             if (drinkIndex >= 0 && drinkIndex < finishedDrinks.length) {
                 finishedDrinks.splice(drinkIndex, 1);
+                if (selectedTrashDrinkIndex !== null) {
+                    if (selectedTrashDrinkIndex === drinkIndex) selectedTrashDrinkIndex = null;
+                    else if (selectedTrashDrinkIndex > drinkIndex) selectedTrashDrinkIndex--;
+                }
             }
             
             // Level Progress Check
