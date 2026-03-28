@@ -1605,6 +1605,7 @@
                         <option value="score">종합 점수</option>
                         <option value="bestRep">최고 평판</option>
                         <option value="bestGold">최고 골드</option>
+                        <option value="totalGoldEarned">누적 골드 획득</option>
                         <option value="maxServedCustomers">최대 서빙 고객수</option>
                         <option value="bestStreak">최고 연속 정답</option>
                         <option value="maxCombo">최대 콤보</option>
@@ -1767,7 +1768,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00116</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00117</div>
 
     <script>
         // --- Game Data ---
@@ -2041,8 +2042,17 @@
             bestRep: 0,
             maxServedCustomers: 0,
             bestGold: 0,
-            maxCombo: 0
+            maxCombo: 0,
+            totalGoldEarned: 0
         };
+
+        function addGoldToWallet(amount) {
+            const n = Math.floor(Number(amount) || 0);
+            if (n <= 0) return;
+            state.gold += n;
+            playerRecords.totalGoldEarned = (playerRecords.totalGoldEarned || 0) + n;
+            savePlayerRecords();
+        }
 
         function savePlayerRecords() {
             localStorage.setItem(PLAYER_RECORDS_KEY, JSON.stringify(playerRecords));
@@ -2054,6 +2064,7 @@
             try {
                 const parsed = JSON.parse(saved);
                 playerRecords = { ...playerRecords, ...parsed };
+                if (typeof playerRecords.totalGoldEarned !== 'number') playerRecords.totalGoldEarned = 0;
             } catch (e) {
                 console.warn('Failed to load player records', e);
             }
@@ -2234,7 +2245,8 @@
                 bestRep: 0,
                 maxServedCustomers: 0,
                 bestGold: 0,
-                maxCombo: 0
+                maxCombo: 0,
+                totalGoldEarned: 0
             };
             savePlayerRecords();
             renderRecordPanel();
@@ -2322,7 +2334,7 @@
         function formatRankingValue(metric, row) {
             const value = row[metric] !== undefined ? row[metric] : row.score;
             if (metric === 'accuracy') return `${Number(value || 0).toFixed(1)}%`;
-            if (metric === 'bestGold' || metric === 'score') return `${Math.floor(Number(value || 0))}`;
+            if (metric === 'bestGold' || metric === 'score' || metric === 'totalGoldEarned') return `${Math.floor(Number(value || 0))}`;
             return `${Math.floor(Number(value || 0))}`;
         }
 
@@ -2499,6 +2511,7 @@
                 <div class="row"><span class="k">최고 평판</span><span class="v">${playerRecords.bestRep}</span></div>
                 <div class="row"><span class="k">최대 서빙 고객수</span><span class="v">${playerRecords.maxServedCustomers}</span></div>
                 <div class="row"><span class="k">최고 골드</span><span class="v">${playerRecords.bestGold}G</span></div>
+                <div class="row"><span class="k">누적 골드 획득</span><span class="v">${playerRecords.totalGoldEarned || 0}G</span></div>
                 <div class="row"><span class="k">최대 콤보</span><span class="v">${playerRecords.maxCombo}</span></div>
             `;
         }
@@ -4022,7 +4035,7 @@
 
             // alert(msg); // Removed alert for smoother gameplay with effects
 
-            state.gold += reward;
+            addGoldToWallet(reward);
             state.rep += repChange;
             if (quality !== 'F') {
                 state.sessionServedCustomers = (state.sessionServedCustomers || 0) + 1;
@@ -4286,7 +4299,7 @@
                 clearInterval(levelState.timerId);
                 createConfetti();
                 alert(`🎉 Stage ${levelState.level} 클리어! 보너스 50G 획득! 🎉`);
-                state.gold += 50;
+                addGoldToWallet(50);
                 startLevel(levelState.level + 1);
             }
         }
