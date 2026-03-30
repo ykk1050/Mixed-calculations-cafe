@@ -684,6 +684,26 @@
         body.theme-space .panel { background-color: #283593; border-color: #7986cb; color: #fff; }
         body.theme-space .btn { background-color: #3949ab; }
         body.theme-space .slot { background-color: #303f9f; border-color: #7986cb; }
+        body.theme-space .item-card { background: #1a237e; border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space .item-card.tap-selected { background: #283593; border-color: #80cbc4; }
+        body.theme-space .shop-item { background: #1a237e; border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space .shop-item .shop-category { border-color: #3949ab; }
+        body.theme-space #kitchen-layout #inventory-area { background: rgba(26,35,126,0.95); border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space #kitchen-layout .sidebar-panel { background: rgba(26,35,126,0.95); border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space #kitchen-status-bar { background: rgba(26,35,126,0.95); border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space #crafting-area { background: rgba(40,53,147,0.9); border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space .drink-item { background: #283593; border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space .customer-card { background: #1a237e; border-color: #5c6bc0; color: #e8eaf6; }
+        body.theme-space .shop-category { color: #b0bec5; border-color: #3949ab; }
+        body.theme-cat .item-card { background: #fce4ec; border-color: #f48fb1; }
+        body.theme-cat .item-card.tap-selected { background: #f8bbd0; border-color: #ec407a; }
+        body.theme-cat .shop-item { background: #fce4ec; border-color: #f48fb1; }
+        body.theme-cat #kitchen-layout #inventory-area { background: rgba(252,228,236,0.97); border-color: #ec407a; }
+        body.theme-cat #kitchen-layout .sidebar-panel { background: rgba(252,228,236,0.97); border-color: #ec407a; }
+        body.theme-cat #kitchen-status-bar { background: rgba(252,228,236,0.97); border-color: #ec407a; }
+        body.theme-cat #crafting-area { background: rgba(252,228,236,0.9); border-color: #ec407a; }
+        body.theme-cat .drink-item { background: #fce4ec; border-color: #f48fb1; }
+        body.theme-cat .customer-card { background: #fce4ec; border-color: #f48fb1; }
 
         #current-recipe-info img {
             height: 40px;
@@ -765,7 +785,7 @@
         #kitchen-layout #inventory-area {
             flex: 1 1 auto;
             min-height: 200px;
-            overflow: hidden;
+            overflow: visible;
             display: flex;
             flex-direction: column;
         }
@@ -1768,7 +1788,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00117</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00118</div>
 
     <script>
         // --- Game Data ---
@@ -2732,8 +2752,8 @@
                 } else if (item.type === 'theme') {
                     if (state.unlockedItems.includes(item.id)) {
                         if (state.theme === item.themeId) {
-                            btnText = "적용중";
-                            btnDisabled = true;
+                            btnText = "해제";
+                            btnDisabled = false;
                         } else {
                             btnText = "적용";
                             btnDisabled = false;
@@ -2781,9 +2801,14 @@
         function buyShopItem(itemId) {
             const item = shopItems.find(i => i.id === itemId);
             
-            // Logic for applying owned items (Theme/BGM)
+            // Logic for applying/deactivating owned items (Theme/BGM)
             if (item.type === 'theme' && state.unlockedItems.includes(itemId)) {
-                applyTheme(item.themeId);
+                if (state.theme === item.themeId) {
+                    applyTheme('default');
+                } else {
+                    applyTheme(item.themeId);
+                }
+                renderShop();
                 return;
             }
             if (item.type === 'bgm' && state.unlockedItems.includes(itemId)) {
@@ -4500,35 +4525,37 @@
                 }
             }
 
-            // Permanent scheduled deliveries (Lv2 has shorter cooldown)
-            if (state.upgrades.deliveryWaterLv2) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.water = (state.inventory.water || 0) + 2;
-            } else if (state.upgrades.deliveryWater) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.water = (state.inventory.water || 0) + 2;
-            }
+            // Permanent scheduled deliveries (paused in shop, Lv2 has shorter cooldown)
+            if (currentScene !== 'shop') {
+                if (state.upgrades.deliveryWaterLv2) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.water = (state.inventory.water || 0) + 2;
+                } else if (state.upgrades.deliveryWater) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.water = (state.inventory.water || 0) + 2;
+                }
 
-            if (state.upgrades.deliveryBeanLv2) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.bean = (state.inventory.bean || 0) + 2;
-            } else if (state.upgrades.deliveryBean) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.bean = (state.inventory.bean || 0) + 2;
-            }
+                if (state.upgrades.deliveryBeanLv2) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.bean = (state.inventory.bean || 0) + 2;
+                } else if (state.upgrades.deliveryBean) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.bean = (state.inventory.bean || 0) + 2;
+                }
 
-            if (state.upgrades.deliveryMilkLv2) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.milk = (state.inventory.milk || 0) + 2;
-            } else if (state.upgrades.deliveryMilk) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.milk = (state.inventory.milk || 0) + 2;
-            }
+                if (state.upgrades.deliveryMilkLv2) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.milk = (state.inventory.milk || 0) + 2;
+                } else if (state.upgrades.deliveryMilk) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.milk = (state.inventory.milk || 0) + 2;
+                }
 
-            if (state.upgrades.deliveryIceLv2) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.ice = (state.inventory.ice || 0) + 2;
-            } else if (state.upgrades.deliveryIce) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.ice = (state.inventory.ice || 0) + 2;
-            }
+                if (state.upgrades.deliveryIceLv2) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.ice = (state.inventory.ice || 0) + 2;
+                } else if (state.upgrades.deliveryIce) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.ice = (state.inventory.ice || 0) + 2;
+                }
 
-            if (state.upgrades.deliverySparklingLv2) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.sparkling = (state.inventory.sparkling || 0) + 2;
-            } else if (state.upgrades.deliverySparkling) {
-                if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.sparkling = (state.inventory.sparkling || 0) + 2;
+                if (state.upgrades.deliverySparklingLv2) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL2_SECONDS === 0) state.inventory.sparkling = (state.inventory.sparkling || 0) + 2;
+                } else if (state.upgrades.deliverySparkling) {
+                    if (gameTime % DELIVERY_INTERVAL_LEVEL1_SECONDS === 0) state.inventory.sparkling = (state.inventory.sparkling || 0) + 2;
+                }
             }
 
             // Update Patience (Paused in Shop)
