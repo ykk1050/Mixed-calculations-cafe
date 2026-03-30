@@ -1133,9 +1133,9 @@
             #scene-kitchen #recipe-area h2, #scene-kitchen #recipe-area p { margin: 2px 0; font-size: 0.85rem; }
             #scene-kitchen #kitchen-area { flex: 0 0 auto; padding: 6px; }
             #scene-kitchen #kitchen-status-bar { flex-shrink: 0; min-height: 80px; }
-            #scene-kitchen #inventory-area { min-height: 150px; max-height: 220px; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; }
+            #scene-kitchen #inventory-area { min-height: 150px; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; }
             #scene-kitchen #inventory-area h2 { margin: 4px 0 2px; font-size: 0.9rem; flex-shrink: 0; }
-            #scene-kitchen #inventory-area .item-list { min-height: 120px; max-height: 190px; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
+            #scene-kitchen #inventory-area .item-list { min-height: 120px; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
             
             .item-list {
                 grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -1217,15 +1217,15 @@
             .serving-counter-label { font-size: 0.65rem; }
             .nav-btn { font-size: 0.8rem !important; padding: 6px 10px !important; }
             
-            #scene-kitchen #inventory-area { min-height: 150px; max-height: 220px; overflow: visible; }
-            #scene-kitchen #inventory-area .item-list { min-height: 120px; max-height: 190px; overflow-y: auto; }
+            #scene-kitchen #inventory-area { min-height: 140px; overflow: visible; }
+            #scene-kitchen #inventory-area .item-list { min-height: 100px; overflow-y: auto; }
         }
         
         /* 주방 모바일 - 재료 창고 컴팩트 유지 */
         @media (max-width: 768px) and (max-height: 700px) {
             #scene-kitchen #recipe-area { max-height: 14vh; }
-            #scene-kitchen #inventory-area { min-height: 150px; max-height: 200px; overflow: visible; }
-            #scene-kitchen #inventory-area .item-list { min-height: 120px; max-height: 170px; overflow-y: auto; }
+            #scene-kitchen #inventory-area { min-height: 140px; overflow: visible; }
+            #scene-kitchen #inventory-area .item-list { min-height: 100px; overflow-y: auto; }
         }
         
         /* 가로모드(랜드스케이프) - 스크롤 맨 아래까지 가능하도록 */
@@ -1789,7 +1789,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00119</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.0012</div>
 
     <script>
         // --- Game Data ---
@@ -2003,13 +2003,17 @@
         ];
 
         // --- Level System ---
+        const UNLOCK_MISSION_STAGES = [6, 12, 18, 24, 30, 36];
+        const UNLOCK_MISSION_COUNT = 2;
+
         let levelState = {
             level: 1,
-            type: 'serve', // 'serve', 'gold', 'perfect'
+            type: 'serve', // 'serve', 'gold', 'perfect', 'unlock'
             target: 0,
             current: 0,
             timeLeft: 0,
-            timerId: null
+            timerId: null,
+            unlockRecipeIds: null
         };
 
         let gameTime = 0;
@@ -2036,9 +2040,11 @@
         const SERVE_STREAK_GOLD_STEP = 6;
         const DELIVERY_INTERVAL_LEVEL1_SECONDS = 25;
         const DELIVERY_INTERVAL_LEVEL2_SECONDS = 12;
-        const MENU_UNLOCK_GOLD_STEP = 4; // 해금비용 100당 골드 보너스
-        const MENU_UNLOCK_REP_STEP = 1; // 해금비용 200당 평판 보너스
-        const MENU_VARIETY_GOLD_STEP = 2; // 해금 메뉴 1개당 모든 서빙 보너스
+        const MENU_UNLOCK_GOLD_STEP = 4;
+        const MENU_UNLOCK_REP_STEP = 1;
+        const MENU_VARIETY_GOLD_STEP = 2;
+        const INGREDIENT_BONUS_GOLD_PER = 3;
+        const INGREDIENT_BONUS_REP_THRESHOLD = 5;
         const PLAYER_RECORDS_KEY = 'baristaGameRecords';
         const PLAYER_PROFILE_KEY = 'baristaGameProfile';
         const RANKING_API_URL = 'https://script.google.com/macros/s/AKfycbxZvG15HENUXyiSWsB0ywW2zP3j7RzxdjlXirwWIAdflkCk0_holScetsws7uEqNv8Gsw/exec'; // TODO: 배포한 Apps Script Web App URL 입력
@@ -2938,6 +2944,7 @@
             if (levelState.type === 'serve') desc = `손님 ${levelState.target}명 서빙`;
             else if (levelState.type === 'gold') desc = `골드 ${levelState.target}G 벌기`;
             else if (levelState.type === 'perfect') desc = `완벽한 음료(👑) ${levelState.target}잔 서빙`;
+            else if (levelState.type === 'unlock') desc = `🔓 새 메뉴 ${levelState.target}개 해금 (${levelState.current}/${levelState.target})`;
             
             document.getElementById('mission-desc').innerText = desc;
             document.getElementById('mission-progress').innerText = levelState.current;
@@ -2948,6 +2955,10 @@
                 bar.style.backgroundColor = '#ffcdd2';
                 bar.style.color = 'red';
                 bar.style.borderBottomColor = 'red';
+            } else if (levelState.type === 'unlock') {
+                bar.style.backgroundColor = '#e8f5e9';
+                bar.style.color = '#2e7d32';
+                bar.style.borderBottomColor = '#4caf50';
             } else {
                 bar.style.backgroundColor = '#fff3e0';
                 bar.style.color = '#e65100';
@@ -3967,6 +3978,12 @@
             if (state.gold >= recipe.unlockCost) {
                 state.gold -= recipe.unlockCost;
                 recipe.unlocked = true;
+
+                if (levelState.type === 'unlock') {
+                    levelState.current++;
+                    checkLevelSuccess();
+                }
+
                 updateUI();
             }
         }
@@ -4041,7 +4058,17 @@
                     msg += ` (고급 메뉴 보너스 +${unlockGoldBonus}G${unlockRepBonus > 0 ? `, +${unlockRepBonus}평판` : ''})`;
                 }
 
-                // 2) 메뉴 다양성 보너스: 해금 메뉴가 많을수록 모든 서빙 보너스
+                // 2) 재료가 많은 메뉴일수록 추가 보너스
+                const totalIngredients = Object.values(recipe.req).reduce((s, v) => s + v, 0);
+                if (totalIngredients >= 4) {
+                    const ingExtraGold = (totalIngredients - 3) * INGREDIENT_BONUS_GOLD_PER;
+                    const ingExtraRep = totalIngredients >= INGREDIENT_BONUS_REP_THRESHOLD ? Math.floor((totalIngredients - 4) / 2) + 1 : 0;
+                    reward += ingExtraGold;
+                    repChange += ingExtraRep;
+                    msg += ` (복잡한 레시피 보너스 +${ingExtraGold}G${ingExtraRep > 0 ? `, +${ingExtraRep}평판` : ''})`;
+                }
+
+                // 3) 메뉴 다양성 보너스: 해금 메뉴가 많을수록 모든 서빙 보너스
                 const varietyBonus = getVarietyServeBonus();
                 if (varietyBonus.gold > 0 || varietyBonus.rep > 0) {
                     const varietyGoldBonus = varietyBonus.gold;
@@ -4275,45 +4302,52 @@
         }
 
         // --- Level System ---
+        function isUnlockMissionStage(level) {
+            return UNLOCK_MISSION_STAGES.includes(level);
+        }
+
+        function getLockedRecipes() {
+            return recipes.filter(r => !r.unlocked && r.unlockCost > 0);
+        }
+
         function startLevel(level) {
             levelState.level = level;
             levelState.current = 0;
+            levelState.unlockRecipeIds = null;
             
-            if (level === 1) {
+            if (isUnlockMissionStage(level) && getLockedRecipes().length >= UNLOCK_MISSION_COUNT) {
+                levelState.type = 'unlock';
+                levelState.target = UNLOCK_MISSION_COUNT;
+                levelState.timeLeft = 180 + (level * 8);
+                alert(`🔓 Stage ${level} - 메뉴 해금 미션!\n골드를 사용해 새 메뉴 ${UNLOCK_MISSION_COUNT}개를 해금하세요!\n제한시간: ${levelState.timeLeft}초`);
+            } else if (level === 1) {
                 levelState.type = 'serve';
                 levelState.target = 2;
                 levelState.timeLeft = 120;
+                alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
             } else if (level === 2) {
                 levelState.type = 'gold';
                 levelState.target = 100;
                 levelState.timeLeft = 150;
+                alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
             } else if (level === 3) {
                 levelState.type = 'perfect';
                 levelState.target = 2;
                 levelState.timeLeft = 180;
+                alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
             } else {
-                const typeRoll = Math.random();
-                if (typeRoll < 0.4) {
-                    levelState.type = 'serve';
-                    levelState.target = 3 + Math.floor((level - 3) * 0.5);
-                    levelState.timeLeft = 120 + (level * 10);
-                } else if (typeRoll < 0.7) {
-                    levelState.type = 'gold';
-                    levelState.target = 200 + ((level - 3) * 100);
-                    levelState.timeLeft = 150 + (level * 10);
-                } else {
-                    levelState.type = 'perfect';
-                    levelState.target = 2 + Math.floor((level - 3) * 0.3);
-                    levelState.timeLeft = 180 + (level * 10);
-                }
+                assignRandomMission(level);
+                alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
             }
             
-            alert(`🚩 Stage ${level} 시작!\n목표: ${getLevelDesc(levelState)}\n제한시간: ${levelState.timeLeft}초`);
             updateUI();
+            startLevelTimer();
+        }
 
+        function startLevelTimer() {
             if (levelState.timerId) clearInterval(levelState.timerId);
             levelState.timerId = setInterval(() => {
-                if (currentScene === 'shop') return; // 상점 열려있을 때 미션 시간 정지
+                if (currentScene === 'shop') return;
                 levelState.timeLeft--;
                 if (levelState.timeLeft <= 0) {
                     gameOver();
@@ -4322,10 +4356,28 @@
             }, 1000);
         }
 
-        function getLevelDesc(state) {
-            if (state.type === 'serve') return `손님 ${state.target}명 서빙`;
-            if (state.type === 'gold') return `골드 ${state.target}G 벌기`;
-            if (state.type === 'perfect') return `완벽한 음료 ${state.target}잔 서빙`;
+        function assignRandomMission(level) {
+            const typeRoll = Math.random();
+            if (typeRoll < 0.4) {
+                levelState.type = 'serve';
+                levelState.target = 3 + Math.floor((level - 3) * 0.5);
+                levelState.timeLeft = 120 + (level * 10);
+            } else if (typeRoll < 0.7) {
+                levelState.type = 'gold';
+                levelState.target = 200 + ((level - 3) * 100);
+                levelState.timeLeft = 150 + (level * 10);
+            } else {
+                levelState.type = 'perfect';
+                levelState.target = 2 + Math.floor((level - 3) * 0.3);
+                levelState.timeLeft = 180 + (level * 10);
+            }
+        }
+
+        function getLevelDesc(ls) {
+            if (ls.type === 'serve') return `손님 ${ls.target}명 서빙`;
+            if (ls.type === 'gold') return `골드 ${ls.target}G 벌기`;
+            if (ls.type === 'perfect') return `완벽한 음료 ${ls.target}잔 서빙`;
+            if (ls.type === 'unlock') return `🔓 새 메뉴 ${ls.target}개 해금`;
             return "";
         }
 
@@ -4472,6 +4524,7 @@
                         if (r) r.unlocked = savedR.unlocked;
                     });
                     levelState = data.levelState;
+                    if (!levelState.unlockRecipeIds) levelState.unlockRecipeIds = null;
                     
                     if (levelState.timerId) clearInterval(levelState.timerId);
                     if (levelState.timeLeft > 0) {
