@@ -693,7 +693,6 @@
         body.theme-space #kitchen-status-bar { background: rgba(26,35,126,0.95); border-color: #5c6bc0; color: #e8eaf6; }
         body.theme-space #crafting-area { background: rgba(40,53,147,0.9); border-color: #5c6bc0; color: #e8eaf6; }
         body.theme-space .drink-item { background: #283593; border-color: #5c6bc0; color: #e8eaf6; }
-        body.theme-space .customer-card { background: #1a237e; border-color: #5c6bc0; color: #e8eaf6; }
         body.theme-space .shop-category { color: #b0bec5; border-color: #3949ab; }
         body.theme-cat .item-card { background: #fce4ec; border-color: #f48fb1; }
         body.theme-cat .item-card.tap-selected { background: #f8bbd0; border-color: #ec407a; }
@@ -703,7 +702,6 @@
         body.theme-cat #kitchen-status-bar { background: rgba(252,228,236,0.97); border-color: #ec407a; }
         body.theme-cat #crafting-area { background: rgba(252,228,236,0.9); border-color: #ec407a; }
         body.theme-cat .drink-item { background: #fce4ec; border-color: #f48fb1; }
-        body.theme-cat .customer-card { background: #fce4ec; border-color: #f48fb1; }
 
         #current-recipe-info img {
             height: 40px;
@@ -1135,9 +1133,9 @@
             #scene-kitchen #recipe-area h2, #scene-kitchen #recipe-area p { margin: 2px 0; font-size: 0.85rem; }
             #scene-kitchen #kitchen-area { flex: 0 0 auto; padding: 6px; }
             #scene-kitchen #kitchen-status-bar { flex-shrink: 0; min-height: 80px; }
-            #scene-kitchen #inventory-area { min-height: 120px; max-height: 140px; flex: 0 0 auto; overflow: hidden; display: flex; flex-direction: column; }
+            #scene-kitchen #inventory-area { min-height: 150px; max-height: 220px; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; }
             #scene-kitchen #inventory-area h2 { margin: 4px 0 2px; font-size: 0.9rem; flex-shrink: 0; }
-            #scene-kitchen #inventory-area .item-list { min-height: 100px; max-height: 120px; flex: 1; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
+            #scene-kitchen #inventory-area .item-list { min-height: 120px; max-height: 190px; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
             
             .item-list {
                 grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -1218,13 +1216,16 @@
             
             .serving-counter-label { font-size: 0.65rem; }
             .nav-btn { font-size: 0.8rem !important; padding: 6px 10px !important; }
+            
+            #scene-kitchen #inventory-area { min-height: 150px; max-height: 220px; overflow: visible; }
+            #scene-kitchen #inventory-area .item-list { min-height: 120px; max-height: 190px; overflow-y: auto; }
         }
         
         /* 주방 모바일 - 재료 창고 컴팩트 유지 */
         @media (max-width: 768px) and (max-height: 700px) {
             #scene-kitchen #recipe-area { max-height: 14vh; }
-            #scene-kitchen #inventory-area { min-height: 120px; max-height: 130px; }
-            #scene-kitchen #inventory-area .item-list { min-height: 100px; max-height: 110px; }
+            #scene-kitchen #inventory-area { min-height: 150px; max-height: 200px; overflow: visible; }
+            #scene-kitchen #inventory-area .item-list { min-height: 120px; max-height: 170px; overflow-y: auto; }
         }
         
         /* 가로모드(랜드스케이프) - 스크롤 맨 아래까지 가능하도록 */
@@ -1788,7 +1789,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00118</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00119</div>
 
     <script>
         // --- Game Data ---
@@ -2763,8 +2764,8 @@
                 } else if (item.type === 'bgm') {
                     if (state.unlockedItems.includes(item.id)) {
                         if (state.bgm === item.bgmId) {
-                            btnText = "재생중";
-                            btnDisabled = true;
+                            btnText = "해제";
+                            btnDisabled = false;
                         } else {
                             btnText = "재생";
                             btnDisabled = false;
@@ -2808,11 +2809,18 @@
                 } else {
                     applyTheme(item.themeId);
                 }
+                savePermanentData();
                 renderShop();
                 return;
             }
             if (item.type === 'bgm' && state.unlockedItems.includes(itemId)) {
-                applyBgm(item.bgmId);
+                if (state.bgm === item.bgmId) {
+                    applyBgm('default');
+                } else {
+                    applyBgm(item.bgmId);
+                }
+                savePermanentData();
+                renderShop();
                 return;
             }
 
@@ -2844,10 +2852,12 @@
                 } else if (item.type === 'theme') {
                     state.unlockedItems.push(item.id);
                     applyTheme(item.themeId);
+                    savePermanentData();
                     alert(`${item.name} 테마를 획득했습니다!`);
                 } else if (item.type === 'bgm') {
                     state.unlockedItems.push(item.id);
                     applyBgm(item.bgmId);
+                    savePermanentData();
                     alert(`${item.name}을 획득했습니다!`);
                 }
                 
@@ -4343,8 +4353,28 @@
         }
 
         // --- Modal & Logic ---
+        function savePermanentData() {
+            const permanentData = {
+                unlockedItems: state.unlockedItems || [],
+                theme: state.theme || 'default',
+                bgm: state.bgm || 'default'
+            };
+            localStorage.setItem('baristaGamePermanent', JSON.stringify(permanentData));
+        }
+
+        function loadPermanentData() {
+            const saved = localStorage.getItem('baristaGamePermanent');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch(e) {}
+            }
+            return null;
+        }
+
         function saveGame() {
             if (isGameOver) return;
+            savePermanentData();
             const gameData = {
                 state: state,
                 levelState: levelState,
@@ -4398,6 +4428,20 @@
                     if (!state.streaks) state.streaks = { gatherNoMiss: 0, serveNoMiss: 0 };
                     if (typeof state.streaks.gatherNoMiss !== 'number') state.streaks.gatherNoMiss = 0;
                     if (typeof state.streaks.serveNoMiss !== 'number') state.streaks.serveNoMiss = 0;
+                    // 영구 데이터(테마/BGM 구매 내역) 복원 - 게임오버 후에도 유지
+                    const permData = loadPermanentData();
+                    if (permData) {
+                        if (!state.unlockedItems || state.unlockedItems.length === 0) {
+                            state.unlockedItems = permData.unlockedItems || [];
+                        } else {
+                            // 영구 데이터와 병합 (더 많은 쪽 유지)
+                            permData.unlockedItems.forEach(id => {
+                                if (!state.unlockedItems.includes(id)) state.unlockedItems.push(id);
+                            });
+                        }
+                        if (!state.theme || state.theme === 'default') state.theme = permData.theme || 'default';
+                        if (!state.bgm || state.bgm === 'default') state.bgm = permData.bgm || 'default';
+                    }
                     if (!state.unlockedItems) state.unlockedItems = [];
                     if (!state.theme) state.theme = 'default';
                     if (!state.bgm) state.bgm = 'default';
@@ -4453,6 +4497,13 @@
                     console.error("Save load failed", e);
                     return false;
                 }
+            }
+            // 세이브 없을 때도 영구 데이터(구매한 테마/BGM) 복원
+            const permData = loadPermanentData();
+            if (permData) {
+                state.unlockedItems = permData.unlockedItems || [];
+                state.theme = permData.theme || 'default';
+                state.bgm = permData.bgm || 'default';
             }
             return false;
         }
