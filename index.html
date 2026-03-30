@@ -1812,7 +1812,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00122</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00123</div>
 
     <script>
         // --- Game Data ---
@@ -1961,6 +1961,12 @@
         function switchScene(sceneName) {
             console.log("Switching scene to:", sceneName);
             currentScene = sceneName;
+            
+            window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+            const sc = document.getElementById('scene-container');
+            if (sc) sc.scrollTop = 0;
             
             document.body.classList.remove('scene-kitchen', 'scene-shop');
             const fnKitchen = document.getElementById('floating-nav-kitchen');
