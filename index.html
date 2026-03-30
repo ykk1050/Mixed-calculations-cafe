@@ -786,6 +786,7 @@
             overflow: visible;
             display: flex;
             flex-direction: column;
+            max-height: none;
         }
         #kitchen-layout #inventory-area .item-list {
             overflow-y: auto;
@@ -1133,9 +1134,9 @@
             #scene-kitchen #recipe-area h2, #scene-kitchen #recipe-area p { margin: 2px 0; font-size: 0.85rem; }
             #scene-kitchen #kitchen-area { flex: 0 0 auto; padding: 6px; }
             #scene-kitchen #kitchen-status-bar { flex-shrink: 0; min-height: 80px; }
-            #scene-kitchen #inventory-area { min-height: 150px; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; }
+            #scene-kitchen #inventory-area { min-height: 0; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; max-height: none !important; }
             #scene-kitchen #inventory-area h2 { margin: 4px 0 2px; font-size: 0.9rem; flex-shrink: 0; }
-            #scene-kitchen #inventory-area .item-list { min-height: 120px; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
+            #scene-kitchen #inventory-area .item-list { min-height: 0; flex: 0 0 auto; overflow: visible; gap: 6px; padding: 6px; display: flex; flex-wrap: wrap; }
             
             .item-list {
                 grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -1217,15 +1218,15 @@
             .serving-counter-label { font-size: 0.65rem; }
             .nav-btn { font-size: 0.8rem !important; padding: 6px 10px !important; }
             
-            #scene-kitchen #inventory-area { min-height: 140px; overflow: visible; }
-            #scene-kitchen #inventory-area .item-list { min-height: 100px; overflow-y: auto; }
+            #scene-kitchen #inventory-area { min-height: 0; overflow: visible; max-height: none !important; }
+            #scene-kitchen #inventory-area .item-list { min-height: 0; overflow: visible; flex: 0 0 auto; }
         }
         
-        /* 주방 모바일 - 재료 창고 컴팩트 유지 */
+        /* 주방 모바일 - 재료 창고 */
         @media (max-width: 768px) and (max-height: 700px) {
             #scene-kitchen #recipe-area { max-height: 14vh; }
-            #scene-kitchen #inventory-area { min-height: 140px; overflow: visible; }
-            #scene-kitchen #inventory-area .item-list { min-height: 100px; overflow-y: auto; }
+            #scene-kitchen #inventory-area { min-height: 0; overflow: visible; max-height: none !important; }
+            #scene-kitchen #inventory-area .item-list { min-height: 0; overflow: visible; flex: 0 0 auto; }
         }
         
         /* 가로모드(랜드스케이프) - 스크롤 맨 아래까지 가능하도록 */
@@ -1266,10 +1267,13 @@
                 flex: 0 0 auto !important;
             }
             #scene-kitchen #inventory-area {
-                min-height: 160px;
+                min-height: 0;
+                max-height: none !important;
+                overflow: visible;
             }
             #scene-kitchen #inventory-area .item-list {
-                overflow-y: visible !important;
+                overflow: visible !important;
+                flex: 0 0 auto;
             }
         }
         
@@ -1751,6 +1755,7 @@
     <div id="math-modal">
         <div class="modal-content">
             <h2 id="modal-title">계산 문제</h2>
+            <div id="gather-streak-info" style="display:none; background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:6px 10px; margin-bottom:8px; font-size:0.85rem; color:#2e7d32; text-align:center;"></div>
             <div class="guide-text">
                 💡 <b>계산 순서 힌트:</b><br>
                 1. <b>( )</b> 괄호 안을 제일 먼저!<br>
@@ -1789,7 +1794,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.0012</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00121</div>
 
     <script>
         // --- Game Data ---
@@ -4144,6 +4149,23 @@
             document.getElementById('problem-display').innerText = problem.expression;
             document.getElementById('answer-input').value = '';
             document.getElementById('result-msg').innerText = '';
+
+            const streakInfo = document.getElementById('gather-streak-info');
+            if (currentAction && currentAction.type === 'gather') {
+                const streak = state.streaks.gatherNoMiss;
+                if (streak >= 1) {
+                    const nextStreak = streak + 1;
+                    const nextTier = Math.min(5, nextStreak - 1);
+                    const nextExtra = Math.min(GATHER_STREAK_EXTRA_ITEM_MAX, Math.ceil(nextTier / 2));
+                    streakInfo.innerHTML = `🔥 연속 정답 <b>${streak}회</b> | 이번 정답 시 <b>+${1 + nextExtra}개</b> 획득 (보너스 +${nextExtra})`;
+                } else {
+                    streakInfo.innerHTML = `📦 정답을 맞추면 재료 <b>1개</b> 획득 | 연속 정답 시 보너스!`;
+                }
+                streakInfo.style.display = 'block';
+            } else {
+                streakInfo.style.display = 'none';
+            }
+
             document.getElementById('math-modal').style.display = 'flex';
             document.getElementById('answer-input').focus();
         }
@@ -4195,6 +4217,11 @@
                 currentAttempts++;
                 if (currentAction && currentAction.type === 'gather') {
                     state.streaks.gatherNoMiss = 0;
+                    const streakInfo = document.getElementById('gather-streak-info');
+                    streakInfo.innerHTML = `❌ 연속 정답 초기화 | 정답 시 재료 <b>1개</b> 획득`;
+                    streakInfo.style.background = '#fff3e0';
+                    streakInfo.style.borderColor = '#ff9800';
+                    streakInfo.style.color = '#e65100';
                 } else if (currentAction && currentAction.type === 'craft') {
                     state.streaks.serveNoMiss = 0;
                 }
