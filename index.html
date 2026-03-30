@@ -118,9 +118,17 @@
             flex: 1;
             min-height: 0;
         }
-        /* 주방: 위아래 스크롤 가능 */
-        body.scene-kitchen #scene-container {
+        /* 주방: body 스크롤로 전체 내용 접근 가능 */
+        body.scene-kitchen {
             overflow-y: auto !important;
+            overflow-x: hidden !important;
+            height: auto !important;
+            min-height: 100vh;
+        }
+        body.scene-kitchen #scene-container {
+            overflow: visible !important;
+            flex: none !important;
+            height: auto !important;
         }
         body.scene-kitchen #scene-kitchen.active {
             flex: none !important;
@@ -978,11 +986,21 @@
                 min-height: 0;
                 padding-bottom: 80px;
             }
-            /* 주방/상점: 스크롤 가능 + 플로팅 버튼 공간 확보 */
+            /* 주방/상점: body 자체가 스크롤 */
+            body.scene-kitchen,
+            body.scene-shop {
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                height: auto !important;
+                min-height: 100vh;
+                min-height: -webkit-fill-available;
+            }
             body.scene-kitchen #scene-container,
             body.scene-shop #scene-container {
-                overflow-y: auto !important;
-                -webkit-overflow-scrolling: touch;
+                overflow: visible !important;
+                flex: none !important;
+                height: auto !important;
+                min-height: 0;
             }
             body.scene-kitchen #scene-container #scene-kitchen.active,
             body.scene-shop #scene-container #scene-shop.active {
@@ -1231,7 +1249,7 @@
         
         /* 가로모드(랜드스케이프) - 스크롤 맨 아래까지 가능하도록 */
         @media (orientation: landscape) and (max-width: 768px) {
-            body { padding-bottom: 110px; }
+            body { padding-bottom: 110px; overflow-y: auto !important; height: auto !important; min-height: 100vh; }
             #scene-counter { padding-bottom: 100px; }
             #scene-shop { padding-bottom: 100px; }
             #scene-container {
@@ -1794,7 +1812,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00121</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00122</div>
 
     <script>
         // --- Game Data ---
