@@ -702,6 +702,9 @@
         body.theme-space #crafting-area { background: rgba(40,53,147,0.9); border-color: #5c6bc0; color: #e8eaf6; }
         body.theme-space .drink-item { background: #283593; border-color: #5c6bc0; color: #e8eaf6; }
         body.theme-space .shop-category { color: #b0bec5; border-color: #3949ab; }
+        body.theme-space #recipe-area .item-card { color: #000; }
+        body.theme-space .customer-name { color: #000; }
+        body.theme-space .customer-order-bubble { color: #000; }
         body.theme-cat .item-card { background: #fce4ec; border-color: #f48fb1; }
         body.theme-cat .item-card.tap-selected { background: #f8bbd0; border-color: #ec407a; }
         body.theme-cat .shop-item { background: #fce4ec; border-color: #f48fb1; }
@@ -1812,7 +1815,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00123</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00124</div>
 
     <script>
         // --- Game Data ---
@@ -2911,9 +2914,22 @@
             updateUI();
         }
 
+        function ensureBgmLoopFallback() {
+            const player = document.getElementById('bgm-player');
+            if (!player || player.dataset.bgmLoopFallback === '1') return;
+            player.dataset.bgmLoopFallback = '1';
+            player.addEventListener('ended', () => {
+                if (!state.bgm || state.bgm === 'default') return;
+                if (!player.src) return;
+                player.currentTime = 0;
+                player.play().catch(() => {});
+            });
+        }
+
         function applyBgm(bgmId) {
             state.bgm = bgmId;
             const player = document.getElementById('bgm-player');
+            ensureBgmLoopFallback();
             let src = '';
 
             if (bgmId === 'jazz') src = 'jazz_music.mp3';
@@ -2921,16 +2937,25 @@
             else if (bgmId === 'pop') src = 'pop_music.mp3';
 
             if (src) {
-                // Only change source if it's different to prevent restarting
-                // But if it is not playing, try to play
-                const currentSrc = player.getAttribute('src');
-                if (currentSrc !== src) {
+                player.loop = true;
+                let sameTrack = false;
+                if (player.src) {
+                    try {
+                        const path = decodeURIComponent(new URL(player.src, window.location.href).pathname);
+                        sameTrack = path.endsWith('/' + src) || path.endsWith(src);
+                    } catch (e) {
+                        sameTrack = player.src.includes(src);
+                    }
+                }
+                if (!sameTrack) {
                     player.src = src;
                     player.play().catch(e => console.log("Audio play failed (interaction required):", e));
-                } else if (player.paused) {
+                } else if (player.paused || player.ended) {
+                    player.currentTime = 0;
                     player.play().catch(e => console.log("Audio play failed:", e));
                 }
             } else {
+                player.loop = false;
                 player.pause();
                 player.src = "";
             }
@@ -3037,6 +3062,7 @@
         function renderRecipes() {
             const list = document.getElementById('upgrade-list');
             if (!list) return;
+            const savedScroll = list.scrollTop;
             list.innerHTML = '';
             recipes.forEach(recipe => {
                 const div = document.createElement('div');
@@ -3062,6 +3088,7 @@
                 }
                 list.appendChild(div);
             });
+            list.scrollTop = savedScroll;
             renderRecipeVarietyBonus();
         }
 
