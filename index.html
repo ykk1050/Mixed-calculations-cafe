@@ -156,8 +156,13 @@
         /* Scene 1: Counter (Main) */
         #scene-counter {
             position: relative;
-            justify-content: flex-end; /* Align items to bottom */
+            justify-content: flex-end;
             padding-bottom: 20px;
+        }
+        #scene-counter .counter-spacer {
+            flex: 1 1 0;
+            min-height: 0;
+            max-height: 55vh;
         }
 
         #scene-counter h2 {
@@ -1043,6 +1048,7 @@
             
             /* 카운터+고객 / 서빙 / 버전 간격 축소 */
             #scene-counter { padding-bottom: 20px; padding-top: 0; }
+            #scene-counter .counter-spacer { max-height: 45vh; }
             .counter-background-wrapper {
                 width: 100%;
                 top: 28px;
@@ -1074,7 +1080,7 @@
             .customer-name { font-size: 0.8rem; padding: 2px 6px; margin-top: 1px; margin-bottom: 2px; }
             
             /* 서빙 카운터 */
-            .serving-counter-wrapper { margin-top: auto !important; padding-top: 10px; }
+            .serving-counter-wrapper { padding-top: 10px; }
             .serving-counter-area {
                 min-height: 45px;
                 padding: 6px;
@@ -1241,6 +1247,7 @@
         @media (orientation: landscape) and (max-width: 768px) {
             body { padding-bottom: 110px; overflow-y: auto !important; height: auto !important; min-height: 100vh; }
             #scene-counter { padding-bottom: 20px; }
+            #scene-counter .counter-spacer { max-height: 30vh; }
             #scene-shop { padding-bottom: 100px; }
             #scene-container {
                 overflow: visible !important;
@@ -1297,6 +1304,7 @@
             #mission-bar { padding: 3px 6px; font-size: 0.75rem; }
             .scene { padding: 2px 6px 4px 6px; }
             #scene-container { margin-top: -6px; }
+            #scene-counter .counter-spacer { max-height: 38vh; }
             .counter-background-wrapper { top: 24px; bottom: auto; height: 58%; max-height: 48vh; }
             .serving-counter-wrapper { padding-top: 8px; }
             .nav-btn-container { margin-top: 3px; }
@@ -1321,6 +1329,7 @@
             #scene-shop .nav-btn-container { bottom: 22px; }
             #scene-kitchen { padding-bottom: 20px; }
             #scene-shop { padding-bottom: 65px; }
+            #scene-counter .counter-spacer { max-height: 35vh; }
             .counter-background-wrapper { top: 20px; height: 55%; max-height: 46vh; }
             .serving-counter-wrapper { padding-top: 8px; }
             #customer-display-area { bottom: 2%; }
@@ -1661,7 +1670,9 @@
                 </div>
             </div>
 
-            <div class="serving-counter-wrapper" style="margin-top: auto; width: 100%; text-align: center;">
+            <div class="counter-spacer"></div>
+
+            <div class="serving-counter-wrapper" style="width: 100%; text-align: center;">
                 <div class="serving-counter-area" id="serving-counter-main">
                     <span class="serving-counter-label">(음료 더블탭 → 손님에게 전달)</span>
                     <div class="serving-counter-slots"></div>
@@ -1798,7 +1809,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00125</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00126</div>
 
     <script>
         // --- Game Data ---
