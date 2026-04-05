@@ -1041,8 +1041,8 @@
             /* 씬 패딩 축소 */
             .scene { padding: 2px 6px 6px 6px; }
             
-            /* 카운터+고객 / 서빙+버튼 / 버전 간격 축소 */
-            #scene-counter { padding-bottom: 75px; padding-top: 0; }
+            /* 카운터+고객 / 서빙 / 버전 간격 축소 */
+            #scene-counter { padding-bottom: 20px; padding-top: 0; }
             .counter-background-wrapper {
                 width: 100%;
                 top: 28px;
@@ -1084,20 +1084,7 @@
                 margin-right: 8px;
             }
             
-            /* 네비 버튼 - 모바일에서 항상 보이도록 고정 */
-            #scene-counter .nav-btn-container {
-                position: fixed;
-                bottom: 28px;
-                left: 0;
-                right: 0;
-                margin: 0;
-                padding: 0 10px;
-                z-index: 100;
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
+            /* 네비 버튼 */
             .nav-btn-container { margin-top: 4px; }
             .nav-btn-container {
                 display: flex;
@@ -1253,7 +1240,7 @@
         /* 가로모드(랜드스케이프) - 스크롤 맨 아래까지 가능하도록 */
         @media (orientation: landscape) and (max-width: 768px) {
             body { padding-bottom: 110px; overflow-y: auto !important; height: auto !important; min-height: 100vh; }
-            #scene-counter { padding-bottom: 100px; }
+            #scene-counter { padding-bottom: 20px; }
             #scene-shop { padding-bottom: 100px; }
             #scene-container {
                 overflow: visible !important;
@@ -1301,9 +1288,7 @@
         /* 높이가 좁은 화면 (세로가 짧은 기기) */
         @media (max-height: 600px) {
             body { padding-bottom: 35px; }
-            #scene-counter { padding-bottom: 70px; }
-            #scene-counter .nav-btn-container,
-            #scene-counter .nav-btn-container,
+            #scene-counter { padding-bottom: 20px; }
             #scene-shop .nav-btn-container { bottom: 24px; }
             #scene-kitchen { padding-bottom: 20px; }
             #scene-shop { padding-bottom: 68px; }
@@ -1333,7 +1318,6 @@
         /* 높이+너비 모두 좁은 화면 */
         @media (max-width: 480px) and (max-height: 600px) {
             body { padding-bottom: 32px; }
-            #scene-counter .nav-btn-container,
             #scene-shop .nav-btn-container { bottom: 22px; }
             #scene-kitchen { padding-bottom: 20px; }
             #scene-shop { padding-bottom: 65px; }
@@ -1630,6 +1614,10 @@
         <!-- Scene 1: Counter (Main) -->
         <div id="scene-counter" class="scene active">
             <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">☕ 카페 카운터</h2>
+            <div class="nav-btn-container" style="position: relative; z-index: 100; margin-top: 10px; margin-bottom: 10px;">
+                <button class="btn nav-btn" id="btn-to-kitchen" onclick="switchScene('kitchen')">🍳 주방으로 이동</button>
+                <button class="btn nav-btn" id="btn-to-shop" onclick="switchScene('shop')" style="background-color: #ff9800;">🛒 상점 열기</button>
+            </div>
             <div id="record-panel" class="floating-panel">
                 <div class="panel-head">
                     <div class="title">🏆 플레이 기록</div>
@@ -1679,11 +1667,6 @@
                     <div class="serving-counter-slots"></div>
                     <button id="trash-bin-main" class="trash-bin-btn" data-target-type="trash" ondragover="allowDrop(event)" ondrop="dropTrash(event)" onclick="discardSelectedTrashDrink()">🗑️ 쓰레기통</button>
                 </div>
-            </div>
-
-            <div class="nav-btn-container" style="position: relative; z-index: 100;">
-                <button class="btn nav-btn" id="btn-to-kitchen" onclick="switchScene('kitchen')">🍳 주방으로 이동</button>
-                <button class="btn nav-btn" id="btn-to-shop" onclick="switchScene('shop')" style="background-color: #ff9800;">🛒 상점 열기</button>
             </div>
         </div>
 
@@ -1815,7 +1798,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00124</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00125</div>
 
     <script>
         // --- Game Data ---
