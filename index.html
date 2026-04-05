@@ -109,6 +109,16 @@
             to { transform: translateY(0); }
         }
 
+        /* 카운터용 네비 버튼 (미션바 아래) */
+        #counter-nav {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.85);
+            flex-shrink: 0;
+        }
+
         /* Scene Container */
         #scene-container {
             width: 100%;
@@ -156,13 +166,7 @@
         /* Scene 1: Counter (Main) */
         #scene-counter {
             position: relative;
-            justify-content: flex-end;
             padding-bottom: 20px;
-        }
-        #scene-counter .counter-spacer {
-            flex: 1 1 0;
-            min-height: 0;
-            max-height: 55vh;
         }
 
         #scene-counter h2 {
@@ -171,12 +175,10 @@
 
         /* Counter image wrapper - 고객 위치를 counter.png 비율에 고정 */
         .counter-background-wrapper {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
             width: 90%;
-            height: 90%;
+            flex: 1 1 0;
+            min-height: 200px;
             background: url('counter.png') no-repeat center bottom;
             background-size: 100% 100%;
             z-index: 0;
@@ -1048,12 +1050,9 @@
             
             /* 카운터+고객 / 서빙 / 버전 간격 축소 */
             #scene-counter { padding-bottom: 20px; padding-top: 0; }
-            #scene-counter .counter-spacer { max-height: 45vh; }
             .counter-background-wrapper {
                 width: 100%;
-                top: 28px;
-                bottom: auto;
-                height: 62%;
+                min-height: 150px;
                 max-height: 52vh;
             }
             #customer-display-area {
@@ -1091,6 +1090,7 @@
             }
             
             /* 네비 버튼 */
+            #counter-nav { padding: 4px 8px; gap: 8px; }
             .nav-btn-container { margin-top: 4px; }
             .nav-btn-container {
                 display: flex;
@@ -1247,7 +1247,7 @@
         @media (orientation: landscape) and (max-width: 768px) {
             body { padding-bottom: 110px; overflow-y: auto !important; height: auto !important; min-height: 100vh; }
             #scene-counter { padding-bottom: 20px; }
-            #scene-counter .counter-spacer { max-height: 30vh; }
+            .counter-background-wrapper { min-height: 250px; height: 40vh; flex: 0 0 auto; }
             #scene-shop { padding-bottom: 100px; }
             #scene-container {
                 overflow: visible !important;
@@ -1304,8 +1304,7 @@
             #mission-bar { padding: 3px 6px; font-size: 0.75rem; }
             .scene { padding: 2px 6px 4px 6px; }
             #scene-container { margin-top: -6px; }
-            #scene-counter .counter-spacer { max-height: 38vh; }
-            .counter-background-wrapper { top: 24px; bottom: auto; height: 58%; max-height: 48vh; }
+            .counter-background-wrapper { min-height: 120px; max-height: 48vh; }
             .serving-counter-wrapper { padding-top: 8px; }
             .nav-btn-container { margin-top: 3px; }
             #customer-display-area { bottom: 4%; height: 45%; }
@@ -1329,8 +1328,7 @@
             #scene-shop .nav-btn-container { bottom: 22px; }
             #scene-kitchen { padding-bottom: 20px; }
             #scene-shop { padding-bottom: 65px; }
-            #scene-counter .counter-spacer { max-height: 35vh; }
-            .counter-background-wrapper { top: 20px; height: 55%; max-height: 46vh; }
+            .counter-background-wrapper { min-height: 100px; max-height: 46vh; }
             .serving-counter-wrapper { padding-top: 8px; }
             #customer-display-area { bottom: 2%; }
             .customer-img-container { width: 85px; height: 100px; margin-bottom: 2px; }
@@ -1619,14 +1617,16 @@
         ⏳ <span id="mission-timer">0</span>초
     </div>
 
+    <!-- 카운터용 네비 버튼 (미션바 바로 아래, 카운터 화면에서만 표시) -->
+    <div id="counter-nav" class="nav-btn-container">
+        <button class="btn nav-btn" id="btn-to-kitchen" onclick="switchScene('kitchen')">🍳 주방으로 이동</button>
+        <button class="btn nav-btn" id="btn-to-shop" onclick="switchScene('shop')" style="background-color: #ff9800;">🛒 상점 열기</button>
+    </div>
+
     <div id="scene-container">
         <!-- Scene 1: Counter (Main) -->
         <div id="scene-counter" class="scene active">
             <h2 style="background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 10px;">☕ 카페 카운터</h2>
-            <div class="nav-btn-container" style="position: relative; z-index: 100; margin-top: 10px; margin-bottom: 10px;">
-                <button class="btn nav-btn" id="btn-to-kitchen" onclick="switchScene('kitchen')">🍳 주방으로 이동</button>
-                <button class="btn nav-btn" id="btn-to-shop" onclick="switchScene('shop')" style="background-color: #ff9800;">🛒 상점 열기</button>
-            </div>
             <div id="record-panel" class="floating-panel">
                 <div class="panel-head">
                     <div class="title">🏆 플레이 기록</div>
@@ -1669,8 +1669,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="counter-spacer"></div>
 
             <div class="serving-counter-wrapper" style="width: 100%; text-align: center;">
                 <div class="serving-counter-area" id="serving-counter-main">
@@ -1809,7 +1807,7 @@
 
     <audio id="bgm-player" loop></audio>
 
-    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00126</div>
+    <div id="version-info">Mixed_calculation_cafe made by gamtudyssam 0.00127</div>
 
     <script>
         // --- Game Data ---
@@ -1968,6 +1966,8 @@
             document.body.classList.remove('scene-kitchen', 'scene-shop');
             const fnKitchen = document.getElementById('floating-nav-kitchen');
             if (fnKitchen) fnKitchen.style.display = 'none';
+            const counterNav = document.getElementById('counter-nav');
+            if (counterNav) counterNav.style.display = (sceneName === 'counter') ? 'flex' : 'none';
             if (sceneName === 'kitchen') {
                 document.body.classList.add('scene-kitchen');
                 if (fnKitchen) fnKitchen.style.display = 'flex';
